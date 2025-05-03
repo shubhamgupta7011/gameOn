@@ -9,9 +9,6 @@ import java.util.Random;
 
 @Service
 public class OTPService {
-//    Recovery code :- K6LDH1786DHZJNRSUEJ42GQY
-    // Twilio account SID and authentication token
-
 
     public OTPService() {
         Twilio.init("ACCOUNT_SID", "AUTH_TOKEN");
