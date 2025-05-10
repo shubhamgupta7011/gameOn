@@ -3,6 +3,7 @@ package com.example.GameOn.controller;
 import com.example.GameOn.entity.Amenity;
 import com.example.GameOn.entity.TimeSlots;
 import com.example.GameOn.service.AmenityService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -26,6 +27,10 @@ public class AmenityController {
     @Autowired
     AmenityService service;
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @GetMapping("/all")
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
@@ -61,6 +66,10 @@ public class AmenityController {
                 });
     }
 
+    @Operation(
+            summary = "Create New Amenity",
+            description = "To create new Amenity it is use in creating new Event"
+    )
     @PostMapping
     public Mono<ResponseEntity<Amenity>> saveNewDocument(@RequestBody Amenity myEntry) {
         log.info("Received request to save new Amenity: {}", myEntry);
@@ -71,6 +80,10 @@ public class AmenityController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
 
+    @Operation(
+            summary = "Fetch Amenity",
+            description = "To Fetch Amenity and their details like name and time slot present."
+    )
     @GetMapping("{id}")
     public Mono<ResponseEntity<Amenity>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
@@ -78,6 +91,10 @@ public class AmenityController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @Operation(
+            summary = "Fetch Amenity by venueId",
+            description = "To Fetch Amenity and their details like name and time slot present by venueId Associated with venueId."
+    )
     @GetMapping("by_venue/{id}")
     public Flux<ResponseEntity<Amenity>> getByVenueId(@PathVariable String id) {
         return service.getByVenueId(id)
@@ -85,6 +102,10 @@ public class AmenityController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @Operation(
+            summary = "delete Amenity",
+            description = "To delete Amenity no more in use"
+    )
     @DeleteMapping("{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         log.info("Received request to delete Amenity: {}", id);
@@ -92,6 +113,10 @@ public class AmenityController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(
+            summary = "Update Amenity",
+            description = "To Update Amenity if need to update details"
+    )
     @PutMapping
     public Mono<ResponseEntity<Amenity>> update(@RequestBody Mono<Amenity> myEntryMono) {
         log.info("Received request to update Amenity: {}", myEntryMono);
@@ -107,6 +132,10 @@ public class AmenityController {
                 });
     }
 
+    @Operation(
+            summary = "Add TimeSlot in Amenity ",
+            description = "To Update Amenity if need to add and update new Timeslot"
+    )
     @PutMapping("add/time_slot/{id}")
     public Mono<ResponseEntity<Amenity>> update(@PathVariable String id, @RequestBody TimeSlots myEntryMono) {
         log.info("Received request to update Amenity: {}", myEntryMono);

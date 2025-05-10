@@ -1,26 +1,17 @@
 package com.example.GameOn.controller;
 
-import com.example.GameOn.entity.Amenity;
-import com.example.GameOn.entity.Feedback;
 import com.example.GameOn.entity.Venue;
-//import com.example.GameOn.service.VenueService;
-import com.example.GameOn.enums.Skills;
 import com.example.GameOn.responses.VenueRes;
 import com.example.GameOn.service.AmenityService;
 import com.example.GameOn.service.VenueService;
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.annotation.Transient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -38,6 +29,10 @@ public class VenueController {
     AmenityService amenityService;
 
 
+    @Operation(
+            summary = "Fetch all Venue",
+            description = "To fetch Venue and their details on the bases of different filters and we can sort them of different fields"
+    )
     @GetMapping("/all")
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
@@ -73,6 +68,10 @@ public class VenueController {
                 });
     }
 
+    @Operation(
+            summary = "Create New Venue",
+            description = "To Create New Venue for Booking"
+    )
     @PostMapping
     public Mono<ResponseEntity<Venue>> saveNew(@RequestBody Venue myEntry){
 
@@ -84,6 +83,10 @@ public class VenueController {
 
     }
 
+    @Operation(
+            summary = "Fetch Venue by Id",
+            description = "To fetch Venue details by Id for creating new Events"
+    )
     @GetMapping("{id}")
     public Mono<ResponseEntity<Venue>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
@@ -92,6 +95,10 @@ public class VenueController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @Operation(
+            summary = "Fetch all Venue",
+            description = "To Fetch all Venue with their Amenity details and time slot"
+    )
     @GetMapping("all/{id}")
     public Mono<ResponseEntity<VenueRes>> getAllById(@PathVariable String id) {
         return service.getById(new ObjectId(id)).map(ven->{
@@ -115,12 +122,20 @@ public class VenueController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @Operation(
+            summary = "delete Venue by id",
+            description = "To delete Venue if no more in use"
+    )
     @DeleteMapping("{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(
+            summary = "Update Venue",
+            description = "To Update Venue and their details"
+    )
     @PutMapping
     public Mono<ResponseEntity<Venue>> update(@RequestBody Mono<Venue> myEntryMono) {
         return myEntryMono

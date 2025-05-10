@@ -3,6 +3,7 @@ package com.example.GameOn.controller;
 import com.example.GameOn.entity.Feedback;
 //import com.example.GameOn.service.FeedBacksService;
 import com.example.GameOn.service.FeedBacksService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,10 @@ public class FeedBackController {
     @Autowired
     FeedBacksService service;
 
-
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @GetMapping("/all")
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
@@ -59,6 +63,10 @@ public class FeedBackController {
                 });
     }
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @PostMapping
     public Mono<ResponseEntity<Feedback>> saveNew(@RequestBody Feedback myEntry){
 
@@ -70,6 +78,10 @@ public class FeedBackController {
 
     }
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @GetMapping("{id}")
     public Mono<ResponseEntity<Feedback>> getById(@PathVariable String id) {
         Mono<Feedback> re = service.getById(new ObjectId(id));
@@ -77,12 +89,20 @@ public class FeedBackController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @DeleteMapping("{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @PutMapping
     public Mono<ResponseEntity<Feedback>> update(@RequestBody Mono<Feedback> myEntryMono) {
         return myEntryMono

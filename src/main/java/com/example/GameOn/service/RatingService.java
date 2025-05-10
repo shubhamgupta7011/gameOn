@@ -63,6 +63,14 @@ public class RatingService {
         return repository.findById(id);
     }
 
+    public Mono<Ratings> getByUserId(String id){
+        return repository.findByUserId(id);
+    }
+
+    public Mono<Ratings> getByFromUserId(String id){
+        return repository.findByFromUserId(id);
+    }
+
     public void delete(ObjectId id){
         repository.deleteById(id);
     }

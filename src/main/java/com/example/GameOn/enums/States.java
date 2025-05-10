@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public enum States {
-    Delhi("Delhi",""),
+    Delhi("Delhi"),
     AndhraPradesh("Andhra Pradesh"),
     ArunachalPradesh("Arunachal Pradesh"),
     Assam("Assam"),

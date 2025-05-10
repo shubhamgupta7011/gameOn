@@ -4,6 +4,7 @@ import com.example.GameOn.entity.Clubs;
 
 import com.example.GameOn.service.ClubService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -26,7 +27,10 @@ public class ClubController {
     @Autowired
     ClubService service;
 
-
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @GetMapping("/all")
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
@@ -62,6 +66,10 @@ public class ClubController {
                 });
     }
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @PostMapping
     public Mono<ResponseEntity<Clubs>> saveNew(@RequestBody Clubs myEntry){
 
@@ -73,6 +81,10 @@ public class ClubController {
 
     }
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @GetMapping("{id}")
     public Mono<ResponseEntity<Clubs>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
@@ -80,12 +92,20 @@ public class ClubController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @DeleteMapping("{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @PutMapping
     public Mono<ResponseEntity<Clubs>> update(@RequestBody Mono<Clubs> myEntryMono) {
         return myEntryMono

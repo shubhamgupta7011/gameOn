@@ -1,12 +1,14 @@
 package com.example.GameOn.repository;
 
 import com.example.GameOn.entity.Ratings;
+import com.example.GameOn.entity.UserDetails.UserProfile;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -17,4 +19,7 @@ public interface RatingRepository extends ReactiveMongoRepository<Ratings, Objec
 //    List<Ratings> findByDynamicFilters(List<Object> filters, Pageable pageable);
 
 //    Venue findByUserName(String username);
+
+    Mono<Ratings> findByUserId(String userId);
+    Mono<Ratings> findByFromUserId(String fromUserId);
 }

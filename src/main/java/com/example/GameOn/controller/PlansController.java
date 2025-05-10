@@ -2,6 +2,7 @@ package com.example.GameOn.controller;
 
 import com.example.GameOn.entity.PlansAndOffers;
 import com.example.GameOn.service.PlansService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -24,7 +25,10 @@ public class PlansController {
     @Autowired
     PlansService service;
 
-
+    @Operation(
+            summary = "Fetch all Plans",
+            description = "To fetch Plans and their details on the bases of different filters and we can sort them of different fields"
+    )
     @GetMapping("/all")
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
@@ -60,6 +64,10 @@ public class PlansController {
                 });
     }
 
+    @Operation(
+            summary = "Create New Plans",
+            description = "To Create new Plans/Subscription For Users"
+    )
     @PostMapping
     public Mono<ResponseEntity<PlansAndOffers>> saveNew(@RequestBody PlansAndOffers myEntry){
 
@@ -71,6 +79,10 @@ public class PlansController {
 
     }
 
+    @Operation(
+            summary = "Fetch PlansAndOffers by id",
+            description = "To fetch PlansAndOffers by id"
+    )
     @GetMapping("{id}")
     public Mono<ResponseEntity<PlansAndOffers>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
@@ -79,12 +91,20 @@ public class PlansController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @Operation(
+            summary = "To Delete PlansAndOffers",
+            description = "To Delete PlansAndOffers when not in use"
+    )
     @DeleteMapping("{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(
+            summary = "Update Plans",
+            description = "To Update old Plans"
+    )
     @PutMapping
     public Mono<ResponseEntity<PlansAndOffers>> update(@RequestBody Mono<PlansAndOffers> myEntryMono) {
         return myEntryMono

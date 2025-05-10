@@ -34,6 +34,10 @@ public class UtilsController {
         this.nominatimApiClient = nominatimApiClient;
     }
 
+    @Operation(
+            summary = "Fetch the location details",
+            description = "To Fetch the location details by latitude and longitude"
+    )
     @GetMapping("/location/search/{lat}/{lon}")
     public Mono<ResponseEntity<String>> searchLocation(@PathVariable Double lat, @PathVariable Double lon) {
         return nominatimApiClient.getLocationDetails(lat, lon)

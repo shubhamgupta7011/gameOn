@@ -5,6 +5,7 @@ package com.example.GameOn.controller;
 //import com.example.GameOn.utils.JWTUtils;
 import com.example.GameOn.service.OTPService;
 import com.example.GameOn.utils.JwtUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -74,6 +75,10 @@ public class PublicController {
     // Map to store generated OTP for phone numbers (this could be stored in a database or cache)
     private Map<String, String> otpMap = new HashMap<>();
 
+    @Operation(
+            summary = "Send OTP",
+            description = "To Send OTP to the user to login user into app"
+    )
     @PostMapping("/auth/send-otp")
     public ResponseEntity<String> sendOtp(@RequestParam String phoneNumber) {
         // Generate OTP
@@ -87,6 +92,10 @@ public class PublicController {
         return ResponseEntity.ok("OTP sent to phone number.");
     }
 
+    @Operation(
+            summary = "Verify otp",
+            description = "To Verify OTP which is send to user on phone number"
+    )
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestParam String phoneNumber, @RequestParam String otp) {
         String storedOtp = otpMap.get(phoneNumber);
