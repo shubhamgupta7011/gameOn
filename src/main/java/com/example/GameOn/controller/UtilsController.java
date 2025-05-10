@@ -1,7 +1,9 @@
 package com.example.GameOn.controller;
 
+import com.example.GameOn.client.NominatimApiClient;
 import com.example.GameOn.enums.*;
 import com.example.GameOn.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,15 +28,27 @@ public class UtilsController {
     @Autowired
     UserService service;
 
-    @GetMapping("/generateUserId/{number}")
-    public Mono<ResponseEntity<String>> generateUserId(@PathVariable String number) {
-        return Mono.fromSupplier(() -> {
-            String userId = service.generateHashFromPhone(number);
-            log.info("Generating userId {} from phone: {}", userId, number);
-            return ResponseEntity.ok(userId);
-        });
+    private final NominatimApiClient nominatimApiClient;
+
+    public UtilsController(NominatimApiClient nominatimApiClient) {
+        this.nominatimApiClient = nominatimApiClient;
     }
 
+    @GetMapping("/location/search/{lat}/{lon}")
+    public Mono<ResponseEntity<String>> searchLocation(@PathVariable Double lat, @PathVariable Double lon) {
+        return nominatimApiClient.getLocationDetails(lat, lon)
+                .map(response -> {
+                    System.out.println("✅ [Final Response Body]: " + response); // Log final response
+                    return ResponseEntity.ok()
+                            .header("Content-Type", "application/json")
+                            .body(response);
+                });
+    }
+
+    @Operation(
+            summary = "Fetch all the Enums",
+            description = "To fetch all the Enums like City,State,BodyType and etc for Ui configs "
+    )
     @GetMapping("/config")
     public Mono<ResponseEntity<Map<String, Object>>> getAllConfig() {
         return Mono.fromSupplier(() -> {
@@ -44,7 +58,7 @@ public class UtilsController {
                     .collect(Collectors.toMap(BodyType::name, BodyType::getDescription)));
 
             res.put("city", Arrays.stream(City.values())
-                    .collect(Collectors.toMap(City::name, City::getDescription)));
+                    .collect(Collectors.toMap(City::name, City::getDescriptions)));
 
             res.put("dietPreference", Arrays.stream(DietPreference.values())
                     .collect(Collectors.toMap(DietPreference::name, DietPreference::getDescription)));
@@ -86,7 +100,7 @@ public class UtilsController {
                     .collect(Collectors.toMap(SocialMediaActivity::name, SocialMediaActivity::getDescription)));
 
             res.put("states", Arrays.stream(States.values())
-                    .collect(Collectors.toMap(States::name, States::getDescription)));
+                    .collect(Collectors.toMap(States::name, States::getDescriptions)));
 
             res.put("workoutPreference", Arrays.stream(WorkoutPreference.values())
                     .collect(Collectors.toMap(WorkoutPreference::name, WorkoutPreference::getDescription)));
@@ -99,12 +113,5 @@ public class UtilsController {
 
             return ResponseEntity.ok(res);
         });
-    }
-
-    @GetMapping("/phone_by_uid/{uid}")
-    public Mono<ResponseEntity<String>> getPhoneByUid(@PathVariable String uid) {
-        return service.findByUserId(uid)
-                .map(user -> ResponseEntity.ok(user.getPhoneNumber()))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }

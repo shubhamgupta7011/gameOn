@@ -1,7 +1,13 @@
 package com.example.GameOn.enums;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public enum States {
-    Delhi("Delhi"),
+    Delhi("Delhi",""),
     AndhraPradesh("Andhra Pradesh"),
     ArunachalPradesh("Arunachal Pradesh"),
     Assam("Assam"),
@@ -33,15 +39,40 @@ public enum States {
     JammuAndKashmir("Jammu and Kashmir"),
     Ladakh("Ladakh");
 
-    private final String description;
 
-    States(String description) {
-        this.description = description;
+    private final List<String> descriptions;
+
+    States(String... descriptions) {
+        this.descriptions = Arrays.asList(descriptions);
     }
 
-    public String getDescription() {
-        return description;
+    public List<String> getDescriptions() {
+        return descriptions;
     }
 
+    // Map from description -> list of cities having that description
+    private static final Map<String, List<States>> DESCRIPTION_TO_STATES;
+    private static final Map<States, List<String>> STATES_TO_DESCRIPTIONS;
+
+    static {
+        DESCRIPTION_TO_STATES = Arrays.stream(States.values())
+                .flatMap(city -> city.getDescriptions().stream()
+                        .map(desc -> new AbstractMap.SimpleEntry<>(desc, city)))
+                .collect(Collectors.groupingBy(
+                        Map.Entry::getKey,
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())
+                ));
+
+        STATES_TO_DESCRIPTIONS = Arrays.stream(States.values())
+                .collect(Collectors.toMap(
+                        state -> state, States::getDescriptions
+                ));
+    }
+
+    public static Map<String, List<States>> getDescriptionToStatesMap() {
+        return DESCRIPTION_TO_STATES;
+    }
+
+    public static Map<States, List<String>> getCityToDescriptionsMap() { return STATES_TO_DESCRIPTIONS; }
 
 }

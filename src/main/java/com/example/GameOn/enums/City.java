@@ -1,7 +1,13 @@
 package com.example.GameOn.enums;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
+
 public enum City {
-    New_Delhi("Delhi"),
+    New_Delhi("Delhi", "New Delhi"),
     Mumbai("Mumbai"),
     Bangalore("Bangalore"),
     Hyderabad("Hyderabad"),
@@ -51,25 +57,41 @@ public enum City {
     Solapur("Solapur")
     ;
 
-    private final String description;
+    private final List<String> descriptions;
 
-    City(String description) {
-        this.description = description;
+    City(String... descriptions) {
+        this.descriptions = Arrays.asList(descriptions);
     }
 
-    public String getDescription() {
-        return description;
+    public List<String> getDescriptions() {
+        return descriptions;
     }
 
-//    private final String state;
-//
-//    City(String state) {
-//        this.state = state;
-//    }
-//
-//    public String getState() {
-//        return state;
-//    }
+    // Map from description -> list of cities having that description
+    private static final Map<String, List<City>> DESCRIPTION_TO_CITIES;
+    private static final Map<City, List<String>> CITY_TO_DESCRIPTIONS;
+
+    static {
+        DESCRIPTION_TO_CITIES = Arrays.stream(City.values())
+                .flatMap(city -> city.getDescriptions().stream()
+                        .map(desc -> new AbstractMap.SimpleEntry<>(desc, city)))
+                .collect(Collectors.groupingBy(
+                        Map.Entry::getKey,
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())
+                ));
+
+        CITY_TO_DESCRIPTIONS = Arrays.stream(City.values())
+                .collect(Collectors.toMap(
+                        city -> city, City::getDescriptions
+                ));
+    }
+
+    public static Map<String,List<City>> getDescriptionToCitiesMap() {
+        return DESCRIPTION_TO_CITIES;
+    }
+
+    public static Map<City, List<String>> getCityToDescriptionsMap() { return CITY_TO_DESCRIPTIONS; }
+
 }
 
 

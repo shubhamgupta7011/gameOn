@@ -12,7 +12,7 @@ import java.util.List;
 public class Ratings {
     @Id
     private String id;
-    private String toUserId;
+    private String fromUserId;
     private int securityRating;
     private int skillRating;
     private String comments;
