@@ -139,7 +139,7 @@ public class UserController {
             summary = "Create New User",
             description = "To create new Users it is use in setup profile Journey"
     )
-    @PostMapping
+    @PostMapping("/add")
     public Mono<ResponseEntity<UserProfile>> saveNew(@Valid @RequestBody UserProfile myEntry) {
 
         nominatimApiClient.getLocationDetails(myEntry.getLocation().getLatitude(), myEntry.getLocation().getLongitude())
@@ -250,7 +250,7 @@ public class UserController {
             summary = "update match preference",
             description = "Update user match preference by id"
     )
-    @PutMapping("match_preference/{id}")
+    @PutMapping("match_preference/{uid}")
     public Mono<ResponseEntity<UserProfile>> updateUser(
             @RequestBody MatchPreference matchPreference,
             @PathVariable String uid) {
@@ -282,7 +282,7 @@ public class UserController {
             summary = "Update User Location",
             description = "It is Use to update user location"
     )
-    @PostMapping("/update-location/{uid}")
+    @PutMapping("/update-location/{uid}")
     public Mono<UserProfile> updateLocation(
             @PathVariable("uid") String userId, @RequestParam double lat, @RequestParam double lon
     ) {

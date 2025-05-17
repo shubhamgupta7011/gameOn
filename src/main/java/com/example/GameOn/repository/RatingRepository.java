@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -20,6 +21,6 @@ public interface RatingRepository extends ReactiveMongoRepository<Ratings, Objec
 
 //    Venue findByUserName(String username);
 
-    Mono<Ratings> findByUserId(String userId);
-    Mono<Ratings> findByFromUserId(String fromUserId);
+    Flux<Ratings> findByUserId(String userId);
+    Flux<Ratings> findByFromUserId(String fromUserId);
 }

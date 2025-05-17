@@ -3,6 +3,7 @@ package com.example.GameOn.service;
 import com.example.GameOn.entity.Ratings;
 import com.example.GameOn.entity.Venue;
 import com.example.GameOn.repository.RatingRepository;
+import com.example.GameOn.repository.UserRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -21,10 +22,45 @@ public class RatingService {
     @Autowired
     RatingRepository repository;
 
+    @Autowired
+    UserRepository userRepository;
+
     private final ReactiveMongoTemplate mongoTemplate;
 
     public RatingService(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
+    }
+
+    public Mono<Ratings> addRatingAndUpdateAverage(Ratings rating) {
+        // ✅ Save the rating
+        return repository.save(rating)
+                .flatMap(savedRating -> {
+                    // ✅ Update the average rating of the rated user
+                    return userRepository.findByUid(savedRating.getUserId())
+                            .flatMap(userProfile -> {
+                                return repository.findByUserId(savedRating.getUserId())
+                                        .collectList()
+                                        .flatMap(ratings -> {
+                                            // Calculate average ratings
+                                            double avgSecurityRating = ratings.stream()
+                                                    .mapToDouble(Ratings::getSecurityRating)
+                                                    .average()
+                                                    .orElse(0.0);
+
+                                            double avgSkillRating = ratings.stream()
+                                                    .mapToDouble(Ratings::getSkillRating)
+                                                    .average()
+                                                    .orElse(0.0);
+
+                                            // Update the user's profile
+                                            userProfile.getUserDetails().setSecurityRating(avgSecurityRating);
+                                            userProfile.getUserDetails().setSkillRating(avgSkillRating);
+
+                                            return userRepository.save(userProfile)
+                                                    .thenReturn(savedRating);
+                                        });
+                            });
+                });
     }
 
 //    private static final PasswordEncoder passwordEn = new BCryptPasswordEncoder();
@@ -63,11 +99,11 @@ public class RatingService {
         return repository.findById(id);
     }
 
-    public Mono<Ratings> getByUserId(String id){
+    public Flux<Ratings> getByUserId(String id){
         return repository.findByUserId(id);
     }
 
-    public Mono<Ratings> getByFromUserId(String id){
+    public Flux<Ratings> getByFromUserId(String id){
         return repository.findByFromUserId(id);
     }
 

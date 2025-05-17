@@ -1,5 +1,8 @@
 package com.example.GameOn.entity;
 
+import com.example.GameOn.enums.EventStatus;
+import com.example.GameOn.enums.EventType;
+import com.example.GameOn.enums.Skills;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 
@@ -14,5 +17,8 @@ public class Booking {
     private String amenityId;
     private String venueId;
     private String timeSlotId;
-    private String bookingStatus;
+    private EventStatus status;
+    private EventType type;
+    private Skills skills;
+    private int noOfParticipants;
 }

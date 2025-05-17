@@ -67,7 +67,7 @@ public class FeedBackController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @PostMapping
+    @PostMapping("/add")
     public Mono<ResponseEntity<Feedback>> saveNew(@RequestBody Feedback myEntry){
 
         return service.saveNewFeedback(myEntry)
@@ -82,7 +82,7 @@ public class FeedBackController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<Feedback>> getById(@PathVariable String id) {
         Mono<Feedback> re = service.getById(new ObjectId(id));
         return re.map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
@@ -93,7 +93,7 @@ public class FeedBackController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -103,7 +103,7 @@ public class FeedBackController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @PutMapping
+    @PutMapping("/update")
     public Mono<ResponseEntity<Feedback>> update(@RequestBody Mono<Feedback> myEntryMono) {
         return myEntryMono
                 .flatMap(service::saveFeedback) // Call the service method

@@ -2,6 +2,8 @@ package com.example.GameOn.controller;
 
 import com.example.GameOn.entity.Booking;
 
+import com.example.GameOn.enums.EventStatus;
+import com.example.GameOn.enums.EventType;
 import com.example.GameOn.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +37,11 @@ public class BookingController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String skills,
             @RequestParam(required = false) Boolean availability,
+            @RequestParam(required = false) EventStatus status,
+            @RequestParam(required = false) String venueId,
+            @RequestParam(required = false) String amenityId,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) EventType type,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortOrder
     ) {
@@ -43,6 +50,24 @@ public class BookingController {
 
         if (Objects.nonNull(skills)) {
             filterMap.put("skills", skills);
+        }
+        if (Objects.nonNull(status)) {
+            filterMap.put("status", status);
+        }
+        if (Objects.nonNull(venueId)) {
+            filterMap.put("venueId", venueId);
+        }
+        if (Objects.nonNull(amenityId)) {
+            filterMap.put("amenityId", amenityId);
+        }
+        if (Objects.nonNull(amenityId)) {
+            filterMap.put("amenityId", amenityId);
+        }
+        if (Objects.nonNull(userId)) {
+            filterMap.put("userId", userId);
+        }
+        if (Objects.nonNull(type)) {
+            filterMap.put("type", type);
         }
         if (Objects.nonNull(availability)) {
             filterMap.put("availability", availability);
@@ -65,10 +90,10 @@ public class BookingController {
     }
 
     @Operation(
-            summary = "Fetch all Amenity",
+            summary = "Create Booking",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @PostMapping
+    @PostMapping("/add")
     public Mono<ResponseEntity<Booking>> saveNew(@RequestBody Booking myEntry){
 
         return service.saveNew(myEntry)
@@ -80,10 +105,10 @@ public class BookingController {
     }
 
     @Operation(
-            summary = "Fetch all Amenity",
-            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+            summary = "Fetch Booking By Id",
+            description = "Fetch Booking By Id"
     )
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<Booking>> getById(@PathVariable String id) {
         log.info("Received request to delete Booking: {}", id);
         return service.getById(new ObjectId(id))
@@ -92,20 +117,20 @@ public class BookingController {
     }
 
     @Operation(
-            summary = "Fetch all Amenity",
-            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+            summary = "Delete Booking",
+            description = "To Delete Booking"
     )
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @Operation(
-            summary = "Fetch all Amenity",
+            summary = "Update Booking Details",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @PutMapping
+    @PutMapping("/update")
     public Mono<ResponseEntity<Booking>> update(@RequestBody Mono<Booking> myEntryMono) {
         return myEntryMono
                 .flatMap(service::save) // Call the service method

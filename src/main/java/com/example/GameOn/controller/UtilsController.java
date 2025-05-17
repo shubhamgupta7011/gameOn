@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +28,9 @@ public class UtilsController {
 
     @Autowired
     UserService service;
+
+//    @Autowired
+//    ReactiveRedisTemplate<String,String> redisTemplate;
 
     private final NominatimApiClient nominatimApiClient;
 
@@ -51,7 +55,7 @@ public class UtilsController {
 
     @Operation(
             summary = "Fetch all the Enums",
-            description = "To fetch all the Enums like City,State,BodyType and etc for Ui configs "
+            description = "To fetch all the Enums like City, State, BodyType and etc for Ui configs "
     )
     @GetMapping("/config")
     public Mono<ResponseEntity<Map<String, Object>>> getAllConfig() {

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -29,7 +30,7 @@ public class RatingController {
             summary = "Fetch all Rating",
             description = "To fetch Rating and their details on the bases of different filters and we can sort them of different fields"
     )
-    @GetMapping("/api/all")
+    @GetMapping("/all")
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -82,10 +83,27 @@ public class RatingController {
     }
 
     @Operation(
+            summary = "Rating to a user",
+            description = "To Rate a user on the basis of past experience with that user in Event like security rating and skill rating"
+    )
+    @PostMapping("/add")
+    public Mono<ResponseEntity<Ratings>> saveNewAndUpdateUserRating(@RequestBody Mono<Ratings> myEntryMono) {
+        return myEntryMono
+                .flatMap(service::addRatingAndUpdateAverage) // Call service method reactively
+                .doOnNext(saved -> log.info("Ratings saved successfully: {}", saved))
+                .doOnError(error -> log.error("Error Ratings rating", error))
+                .map(savedEntry -> ResponseEntity.status(HttpStatus.CREATED).body(savedEntry)) // Return 201 CREATED
+                .onErrorResume(e -> {
+                    System.err.println("Error saving document: " + e.getMessage());
+                    return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
+                });
+    }
+
+    @Operation(
             summary = "Fetch particular Ratings",
             description = "To Fetch Particular Ratings of a user"
     )
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<Ratings>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
@@ -96,8 +114,8 @@ public class RatingController {
             summary = "Fetch all Ratings to user",
             description = "To Fetch all Ratings for a particular user in user profile"
     )
-    @GetMapping("to_user/{uid}")
-    public Mono<ResponseEntity<Ratings>> getByUserId(@PathVariable String uid) {
+    @GetMapping("/to_user/{uid}")
+    public Flux<ResponseEntity<Ratings>> getByUserId(@PathVariable String uid) {
         return service.getByUserId(uid)
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -107,8 +125,8 @@ public class RatingController {
             summary = "Fetch all Ratings by user",
             description = "To Fetch all Ratings by a particular user"
     )
-    @GetMapping("from_user/{uid}")
-    public Mono<ResponseEntity<Ratings>> getByFromUserId(@PathVariable String uid) {
+    @GetMapping("/from_user/{uid}")
+    public Flux<ResponseEntity<Ratings>> getByFromUserId(@PathVariable String uid) {
         return service.getByFromUserId(uid)
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -118,7 +136,7 @@ public class RatingController {
             summary = "Delete Rating and comments",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(new ObjectId(id));
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -128,7 +146,7 @@ public class RatingController {
             summary = "Update Ratings",
             description = "To update ratings of the user"
     )
-    @PutMapping
+    @PutMapping("/update")
     public Mono<ResponseEntity<Ratings>> update(@RequestBody Mono<Ratings> myEntry) {
         return myEntry
                 .flatMap(service::save) // Call the service method

@@ -14,10 +14,11 @@ public class Amenity {
     @Id
     private String id;
     private String venueId;
+    private String name;
     private String description;
     private List<String> image;
     private boolean availability;
-    private float price;
+    private Double price;
     private String groundId;
     private Skills skills;
     private List<TimeSlots> timeSlots;

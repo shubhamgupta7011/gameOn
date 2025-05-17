@@ -28,7 +28,7 @@ public class ClubController {
     ClubService service;
 
     @Operation(
-            summary = "Fetch all Amenity",
+            summary = "Fetch all Clubs",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
     @GetMapping("/all")
@@ -70,7 +70,7 @@ public class ClubController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @PostMapping
+    @PostMapping("/add")
     public Mono<ResponseEntity<Clubs>> saveNew(@RequestBody Clubs myEntry){
 
             return service.saveNew(myEntry)
@@ -85,7 +85,7 @@ public class ClubController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<Clubs>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
@@ -96,7 +96,7 @@ public class ClubController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -106,7 +106,7 @@ public class ClubController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
-    @PutMapping
+    @PutMapping("/update")
     public Mono<ResponseEntity<Clubs>> update(@RequestBody Mono<Clubs> myEntryMono) {
         return myEntryMono
                 .flatMap(service::save) // Call the service method

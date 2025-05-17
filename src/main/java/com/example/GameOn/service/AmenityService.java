@@ -37,6 +37,31 @@ public class AmenityService {
     public Flux<Amenity> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
         Query query = new Query();
 
+        // ✅ Handle Price Filtering
+        Double minPrice = null;
+        Double maxPrice = null;
+
+        if (filters.containsKey("minPrice")) {
+            minPrice = (Double) filters.remove("minPrice");
+        }
+        if (filters.containsKey("maxPrice")) {
+            maxPrice = (Double) filters.remove("maxPrice");
+        }
+
+        if (minPrice != null || maxPrice != null) {
+            Criteria priceCriteria = Criteria.where("price");
+
+            if (minPrice != null && maxPrice != null) {
+                priceCriteria.gte(minPrice).lte(maxPrice);
+            } else if (minPrice != null) {
+                priceCriteria.gte(minPrice);
+            } else {
+                priceCriteria.lte(maxPrice);
+            }
+
+            query.addCriteria(priceCriteria);
+        }
+
         // ✅ Apply dynamic filters
         if (filters != null && !filters.isEmpty()) {
             filters.forEach((key, value) -> query.addCriteria(Criteria.where(key).is(value)));

@@ -8,10 +8,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -23,11 +26,20 @@ public class ClubService {
     @Autowired
     ClubRepository repository;
 
+    @Autowired
+    private ReactiveRedisTemplate<String, Object> redisTemplate;
+
+    private static final String CLUB_KEY_PREFIX = "club::";
+    private static final String ALL_CLUBS_KEY = "all_clubs";
+
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public ClubService(ReactiveMongoTemplate mongoTemplate) {
+    private final ReactiveValueOperations<String, Object> valueOps;
+
+    public ClubService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, Object> valueOps) {
         this.mongoTemplate = mongoTemplate;
+        this.valueOps = valueOps;
     }
 
 //    private static final PasswordEncoder passwordEn = new BCryptPasswordEncoder();
@@ -65,7 +77,14 @@ public class ClubService {
     }
 
     public Mono<Clubs> getById(ObjectId id){
-        return repository.findById(id);
+        String key = CLUB_KEY_PREFIX + id.toHexString();
+        return valueOps.get(key)
+                .cast(Clubs.class)
+                .switchIfEmpty(repository.findById(id)
+                        .doOnNext(club -> redisTemplate.opsForValue().set(key, club))
+                );
+
+//        return repository.findById(id);
     }
 
     public void delete(String id){

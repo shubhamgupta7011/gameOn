@@ -72,7 +72,7 @@ public class VenueController {
             summary = "Create New Venue",
             description = "To Create New Venue for Booking"
     )
-    @PostMapping
+    @PostMapping("/add")
     public Mono<ResponseEntity<Venue>> saveNew(@RequestBody Venue myEntry){
 
             return service.saveNew(myEntry)
@@ -87,7 +87,7 @@ public class VenueController {
             summary = "Fetch Venue by Id",
             description = "To fetch Venue details by Id for creating new Events"
     )
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<Venue>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
@@ -99,7 +99,7 @@ public class VenueController {
             summary = "Fetch all Venue",
             description = "To Fetch all Venue with their Amenity details and time slot"
     )
-    @GetMapping("all/{id}")
+    @GetMapping("/all/{id}")
     public Mono<ResponseEntity<VenueRes>> getAllById(@PathVariable String id) {
         return service.getById(new ObjectId(id)).map(ven->{
                     return VenueRes.builder()
@@ -126,7 +126,7 @@ public class VenueController {
             summary = "delete Venue by id",
             description = "To delete Venue if no more in use"
     )
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -136,7 +136,7 @@ public class VenueController {
             summary = "Update Venue",
             description = "To Update Venue and their details"
     )
-    @PutMapping
+    @PutMapping("/update")
     public Mono<ResponseEntity<Venue>> update(@RequestBody Mono<Venue> myEntryMono) {
         return myEntryMono
                 .flatMap(service::save) // Call the service method

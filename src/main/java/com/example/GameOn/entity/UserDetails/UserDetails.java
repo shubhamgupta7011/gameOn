@@ -18,8 +18,8 @@ public class UserDetails {
     private String bio;
     private ProfectionalDetails profectionalDetails;
     private List<Skills> skills;
-    private int securityRating;
-    private int skillRating;
+    private Double securityRating;
+    private Double skillRating;
     private List<Language> languages;
     private List<Hobby> hobbies;
     private PersonalPreference personalPreference;

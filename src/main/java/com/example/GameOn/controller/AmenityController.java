@@ -37,6 +37,8 @@ public class AmenityController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String skills,
             @RequestParam(required = false) Boolean availability,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Double minPrice,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortOrder
     ) {
@@ -48,6 +50,12 @@ public class AmenityController {
         }
         if (Objects.nonNull(availability)) {
             filterMap.put("availability", availability);
+        }
+        if (Objects.nonNull(maxPrice)) {
+            filterMap.put("maxPrice", maxPrice);
+        }
+        if (Objects.nonNull(minPrice)) {
+            filterMap.put("minPrice", minPrice);
         }
 
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
@@ -70,7 +78,7 @@ public class AmenityController {
             summary = "Create New Amenity",
             description = "To create new Amenity it is use in creating new Event"
     )
-    @PostMapping
+    @PostMapping("/add")
     public Mono<ResponseEntity<Amenity>> saveNewDocument(@RequestBody Amenity myEntry) {
         log.info("Received request to save new Amenity: {}", myEntry);
         return service.saveNew(myEntry)
@@ -84,7 +92,7 @@ public class AmenityController {
             summary = "Fetch Amenity",
             description = "To Fetch Amenity and their details like name and time slot present."
     )
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<Amenity>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
@@ -95,7 +103,7 @@ public class AmenityController {
             summary = "Fetch Amenity by venueId",
             description = "To Fetch Amenity and their details like name and time slot present by venueId Associated with venueId."
     )
-    @GetMapping("by_venue/{id}")
+    @GetMapping("/by_venue/{id}")
     public Flux<ResponseEntity<Amenity>> getByVenueId(@PathVariable String id) {
         return service.getByVenueId(id)
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
@@ -106,7 +114,7 @@ public class AmenityController {
             summary = "delete Amenity",
             description = "To delete Amenity no more in use"
     )
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         log.info("Received request to delete Amenity: {}", id);
         service.delete(new ObjectId(id));
@@ -117,7 +125,7 @@ public class AmenityController {
             summary = "Update Amenity",
             description = "To Update Amenity if need to update details"
     )
-    @PutMapping
+    @PutMapping("/update")
     public Mono<ResponseEntity<Amenity>> update(@RequestBody Mono<Amenity> myEntryMono) {
         log.info("Received request to update Amenity: {}", myEntryMono);
         return myEntryMono
@@ -136,7 +144,7 @@ public class AmenityController {
             summary = "Add TimeSlot in Amenity ",
             description = "To Update Amenity if need to add and update new Timeslot"
     )
-    @PutMapping("add/time_slot/{id}")
+    @PutMapping("/add/time_slot/{id}")
     public Mono<ResponseEntity<Amenity>> update(@PathVariable String id, @RequestBody TimeSlots myEntryMono) {
         log.info("Received request to update Amenity: {}", myEntryMono);
         return service.getById(new ObjectId(id))

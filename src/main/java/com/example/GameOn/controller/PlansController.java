@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -68,7 +69,7 @@ public class PlansController {
             summary = "Create New Plans",
             description = "To Create new Plans/Subscription For Users"
     )
-    @PostMapping
+    @PostMapping("/add")
     public Mono<ResponseEntity<PlansAndOffers>> saveNew(@RequestBody PlansAndOffers myEntry){
 
             return service.saveNew(myEntry)
@@ -83,7 +84,8 @@ public class PlansController {
             summary = "Fetch PlansAndOffers by id",
             description = "To fetch PlansAndOffers by id"
     )
-    @GetMapping("{id}")
+    @Cacheable(value = "plan", key = "#id")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<PlansAndOffers>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
@@ -95,7 +97,7 @@ public class PlansController {
             summary = "To Delete PlansAndOffers",
             description = "To Delete PlansAndOffers when not in use"
     )
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -105,7 +107,7 @@ public class PlansController {
             summary = "Update Plans",
             description = "To Update old Plans"
     )
-    @PutMapping
+    @PutMapping("/update")
     public Mono<ResponseEntity<PlansAndOffers>> update(@RequestBody Mono<PlansAndOffers> myEntryMono) {
         return myEntryMono
                 .flatMap(service::save) // Call the service method

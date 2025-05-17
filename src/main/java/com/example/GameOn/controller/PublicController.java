@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 @Slf4j
 public class PublicController {
 
@@ -79,15 +79,15 @@ public class PublicController {
             summary = "Send OTP",
             description = "To Send OTP to the user to login user into app"
     )
-    @PostMapping("/auth/send-otp")
-    public ResponseEntity<String> sendOtp(@RequestParam String phoneNumber) {
+    @PostMapping("/send-otp/{number}")
+    public ResponseEntity<String> sendOtp(@PathVariable String number) {
         // Generate OTP
         String otp = otpService.generateOTP();
-        otpMap.put(phoneNumber, otp); // Store OTP (for demo purposes, use a cache or DB in production)
+        otpMap.put(number, otp); // Store OTP (for demo purposes, use a cache or DB in production)
 
         // Send OTP to the user's phone number
-        log.info("otp {} is send to user {} successfully", otp, phoneNumber);
-        otpService.sendOTP(phoneNumber, otp);
+        log.info("otp {} is send to user {} successfully", otp, number);
+        otpService.sendOTP(number, otp);
 
         return ResponseEntity.ok("OTP sent to phone number.");
     }
