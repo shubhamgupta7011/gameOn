@@ -2,6 +2,8 @@ package com.example.GameOn.service;
 
 import com.example.GameOn.entity.Clubs;
 import com.example.GameOn.repository.ClubRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -27,17 +29,18 @@ public class ClubService {
     ClubRepository repository;
 
     @Autowired
-    private ReactiveRedisTemplate<String, Object> redisTemplate;
+    private ReactiveRedisTemplate<String, String> redisTemplate;
 
+    private final ReactiveValueOperations<String, String> valueOps;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private static final String CLUB_KEY_PREFIX = "club::";
     private static final String ALL_CLUBS_KEY = "all_clubs";
 
-
     private final ReactiveMongoTemplate mongoTemplate;
 
-    private final ReactiveValueOperations<String, Object> valueOps;
 
-    public ClubService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, Object> valueOps) {
+
+    public ClubService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, String> valueOps) {
         this.mongoTemplate = mongoTemplate;
         this.valueOps = valueOps;
     }
@@ -46,7 +49,16 @@ public class ClubService {
 
     public Mono<Clubs> save(Clubs myEntry){
         myEntry.setLastUpdatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
-        return repository.save(myEntry);
+//        return repository.save(myEntry);
+
+        return repository.save(myEntry)
+                .flatMap(savedClub -> {
+                    String key = CLUB_KEY_PREFIX + savedClub.getId();
+                    return redisTemplate.opsForValue().delete(key)       // Invalidate cache
+                            .then(Mono.fromCallable(() -> objectMapper.writeValueAsString(savedClub))) // Serialize new data
+                            .flatMap(json -> redisTemplate.opsForValue().set(key, json))  // Update cache
+                            .thenReturn(savedClub);
+                });
     }
 
     public Mono<Clubs> saveNew(Clubs myEntry){
@@ -76,19 +88,29 @@ public class ClubService {
         return mongoTemplate.find(query, Clubs.class);
     }
 
-    public Mono<Clubs> getById(ObjectId id){
+    public Mono<Clubs> getById(ObjectId id) {
         String key = CLUB_KEY_PREFIX + id.toHexString();
-        return valueOps.get(key)
-                .cast(Clubs.class)
-                .switchIfEmpty(repository.findById(id)
-                        .doOnNext(club -> redisTemplate.opsForValue().set(key, club))
+
+        return redisTemplate.opsForValue().get(key)
+                .flatMap(json -> Mono.fromCallable(() -> objectMapper.readValue(json, Clubs.class)))
+                .onErrorResume(e -> Mono.empty()) // if deserialization fails, ignore cache and load from DB
+                .switchIfEmpty(
+                        repository.findById(id).flatMap(club -> {
+                                    return Mono.fromCallable(() -> objectMapper.writeValueAsString(club))
+                                            .flatMap(json -> redisTemplate.opsForValue().set(key, json,Duration.ofMinutes(5)).thenReturn(club));
+                                })
                 );
 
 //        return repository.findById(id);
     }
 
     public void delete(String id){
-        repository.deleteById(new ObjectId(id));
+        String key = CLUB_KEY_PREFIX + id;
+
+        // Delete from the database and remove from Redis cache
+        repository.deleteById(new ObjectId(id))
+                .then(redisTemplate.opsForValue().delete(key))
+                .subscribe();
     }
 
 }

@@ -7,10 +7,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 
 
+import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class Clubs {
+public class Clubs implements Serializable {
     @Id
     private String id;
     private String name;

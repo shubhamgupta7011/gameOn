@@ -1,5 +1,11 @@
 package com.example.GameOn.config;
 
+import com.example.GameOn.entity.Clubs;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,9 +13,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.*;
 import reactor.core.publisher.Mono;
 
 @Configuration
@@ -24,34 +28,22 @@ public class RedisConfig {
 
     @Bean
     @Primary
-    public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate() {
-        RedisSerializationContext<String, Object> serializationContext = RedisSerializationContext
-                .<String, Object>newSerializationContext(new StringRedisSerializer())
+    public ReactiveRedisTemplate<String, String> stringReactiveRedisTemplate() {
+
+        // Use String serializer for both key and value
+        RedisSerializationContext<String, String> context = RedisSerializationContext
+                .<String, String>newSerializationContext(new StringRedisSerializer())
                 .key(new StringRedisSerializer())
-//                .value(new StringRedisSerializer())
-                .value(new GenericJackson2JsonRedisSerializer())
+                .value(new StringRedisSerializer())
                 .hashKey(new StringRedisSerializer())
-                .hashValue(new GenericJackson2JsonRedisSerializer())
+                .hashValue(new StringRedisSerializer())
                 .build();
-        return new ReactiveRedisTemplate<>(factory, serializationContext);
+
+        return new ReactiveRedisTemplate<>(factory, context);
     }
 
-//    @Bean
-//    @Primary
-//    public ReactiveRedisTemplate<String, String> reactiveRedisTemplate() {
-//        RedisSerializationContext<String, String> serializationContext = RedisSerializationContext
-//                .<String, String>newSerializationContext(new StringRedisSerializer())
-//                .key(new StringRedisSerializer())
-//                .value(new StringRedisSerializer())
-////                .value(new GenericJackson2JsonRedisSerializer())
-//                .hashKey(new StringRedisSerializer())
-//                .hashValue(new GenericJackson2JsonRedisSerializer())
-//                .build();
-//        return new ReactiveRedisTemplate<>(factory, serializationContext);
-//    }
-
     @Bean
-    public ReactiveValueOperations<String, Object> reactiveValueOperations(ReactiveRedisTemplate<String, Object> template) {
+    public ReactiveValueOperations<String, String> reactiveValueOperations(ReactiveRedisTemplate<String, String> template) {
         return template.opsForValue();
     }
 
