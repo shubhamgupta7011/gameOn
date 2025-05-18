@@ -1,19 +1,15 @@
 package com.example.GameOn.service;
 
-import com.example.GameOn.entity.Ratings;
 import com.example.GameOn.entity.UserDetails.UserProfile;
 import com.example.GameOn.repository.UserRepository;
-import com.example.GameOn.utils.QueryBuilder;
+import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 //import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
@@ -25,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.*;
-import java.util.Date;
 import java.util.Map;
 
 @Component

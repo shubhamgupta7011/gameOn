@@ -1,11 +1,9 @@
-package com.example.GameOn.utils;
+package com.example.GameOn.filters;
 
-import com.example.GameOn.entity.UserDetails.UserProfile;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -19,11 +17,12 @@ public class QueryBuilder {
     public static <T> Query buildQuery(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
         Query query = new Query();
 
-//        // ✅ Age Filtering
-//        applyAgeFilter(query, filters);
+        // ✅ Age Filtering
+        applyAgeFilter(query, filters);
 
         // ✅ Apply Range-Based Filters (minX, maxX)
-        applyRangeFilters(query, filters);
+        if ((!filters.containsKey("minAge")) && (!filters.containsKey("maxAge")))
+            applyRangeFilters(query, filters);
 
         // ✅ Geospatial Filtering
         applyGeospatialFilter(query, filters);
@@ -40,26 +39,8 @@ public class QueryBuilder {
         return query;
     }
 
-//    public static <T> Query buildQuery(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-//        Query query = new Query();
-//
-//        // ✅ Apply Range-Based Filters (minX, maxX)
-//        applyRangeFilters(query, filters);
-//
-//        // ✅ Apply Exact Match and List-Based Filters
-//        applyExactAndListFilters(query, filters);
-//
-//        // ✅ Apply Sorting
-//        applySorting(query, sortBy, sortOrder);
-//
-//        // ✅ Apply Pagination
-//        applyPagination(query, page, size);
-//
-//        return query;
-//    }
-
-    // 🔹 Apply Exact Match and "IN" Queries for Lists
-    private static void applyExactAndListFilters(Query query, Map<String, Object> filters ) {
+    // 🔹🔹 Apply Exact Match and "IN" Queries for Lists
+    private static void applyExactAndListFilters(Query query, Map<String, Object> filters) {
         filters.forEach((key, value) -> {
             if (value instanceof List) {
                 query.addCriteria(Criteria.where(key).in((List<?>) value));
@@ -69,6 +50,7 @@ public class QueryBuilder {
         });
     }
 
+    // 🔹🔹 Apply Location-Based Filters like maxDistance nearby
     private static void applyGeospatialFilter(Query query, Map<String, Object> filters) {
         if (filters.containsKey("latitude") && filters.containsKey("longitude") && filters.containsKey("distanceInKm")) {
             Double latitude = (Double) filters.remove("latitude");
@@ -84,7 +66,7 @@ public class QueryBuilder {
         }
     }
 
-    // 🔹 Apply Range-Based Filters like minPrice, maxPrice, minAge, maxAge
+    // 🔹🔹 Apply Range-Based Filters like minPrice, maxPrice, minAge, maxAge
     private static void applyRangeFilters(Query query, Map<String, Object> filters) {
         String[] rangeKeys = {"min", "max"};
 
@@ -108,6 +90,7 @@ public class QueryBuilder {
         });
     }
 
+    // 🔹🔹 Apply Range-Based Filters like minAge, maxAge
     private static void applyAgeFilter(Query query, Map<String, Object> filters) {
         Integer minAge = (Integer) filters.remove("minAge");
         Integer maxAge = (Integer) filters.remove("maxAge");
@@ -130,7 +113,7 @@ public class QueryBuilder {
                 ageCriteria = ageCriteria.gte(minDateOfBirth).lte(maxDateOfBirth);
             } else if (minDateOfBirth != null) {
                 ageCriteria = ageCriteria.gte(minDateOfBirth);
-            } else if (maxDateOfBirth != null) {
+            } else {
                 ageCriteria = ageCriteria.lte(maxDateOfBirth);
             }
 
@@ -138,7 +121,7 @@ public class QueryBuilder {
         }
     }
 
-    // 🔹 Apply Sorting
+    // 🔹🔹 Apply Sorting
     private static void applySorting(Query query, String sortBy, String sortOrder) {
         if (sortBy != null && !sortBy.isEmpty()) {
             Sort.Direction direction = "desc".equalsIgnoreCase(sortOrder) ? Sort.Direction.DESC : Sort.Direction.ASC;
@@ -146,7 +129,7 @@ public class QueryBuilder {
         }
     }
 
-    // 🔹 Apply Pagination
+    // 🔹🔹 Apply Pagination
     private static void applyPagination(Query query, int page, int size) {
         query.skip((long) page * size).limit(size);
     }

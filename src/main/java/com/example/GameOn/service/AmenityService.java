@@ -2,7 +2,7 @@ package com.example.GameOn.service;
 
 import com.example.GameOn.entity.Amenity;
 import com.example.GameOn.repository.AmenityRepository;
-import com.example.GameOn.utils.QueryBuilder;
+import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
