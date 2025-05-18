@@ -6,6 +6,7 @@ import com.example.GameOn.entity.UserDetails.UserProfile;
 
 import com.example.GameOn.enums.*;
 import com.example.GameOn.service.UserService;
+import com.example.GameOn.utils.Utility;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -47,13 +48,15 @@ public class UserController {
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String skills,
+            @RequestParam(required = false) Skills skills,
             @RequestParam(required = false) Boolean isDeleted,
             @RequestParam(required = false) Boolean isVerified,
             @RequestParam(required = false) String planId,
             @RequestParam(required = false) Integer securityRating,
 //            @RequestParam(required = false) Integer skillRating,
             @RequestParam(required = false) Gender gender,
+            @RequestParam(required = false) Integer minAge,
+            @RequestParam(required = false) Integer maxAge,
             @RequestParam(required = false) SmokingPreference smoking,
             @RequestParam(required = false) DrinkingPreference drinking,
             @RequestParam(required = false) WorkoutPreference workout,
@@ -70,6 +73,12 @@ public class UserController {
 
         Map<String, Object> filterMap = new HashMap<>();
 
+        if (Objects.nonNull(minAge)) {
+            filterMap.put("minAge", minAge);
+        }
+        if (Objects.nonNull(maxAge)) {
+            filterMap.put("maxAge", maxAge);
+        }
         if (Objects.nonNull(skills)) {
             filterMap.put("skills", skills);
         }
@@ -80,7 +89,7 @@ public class UserController {
             filterMap.put("isVerified", isVerified);
         }
         if (Objects.nonNull(planId)) {
-            filterMap.put("planId", planId);
+            filterMap.put("subscription.planId", planId);
         }
         if (Objects.nonNull(gender)) {
             filterMap.put("userDetails.gender", gender);
@@ -98,7 +107,7 @@ public class UserController {
             filterMap.put("userDetails.languages", languages);
         }
         if (Objects.nonNull(hobby)) {
-            filterMap.put("userDetails.hobby", hobby);
+            filterMap.put("userDetails.hobbies", hobby);
         }
         if (Objects.nonNull(workout)) {
             filterMap.put("userDetails.personalPreference.workout", workout);
@@ -113,10 +122,10 @@ public class UserController {
             filterMap.put("userDetails.lookingFor", lookingFor);
         }
         if (Objects.nonNull(city)) {
-            filterMap.put("userDetails.personalDetails.location.city", city);
+            filterMap.put("location.city", city);
         }
         if (Objects.nonNull(state)) {
-            filterMap.put("userDetails.personalDetails.location.state", state);
+            filterMap.put("location.state", state);
         }
 
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
@@ -171,8 +180,8 @@ public class UserController {
 
         myEntry.getSubscription().setPlanId("plan_Free_7");
         myEntry.getSubscription().setPlansType(PlansType.TRIAL);
-        myEntry.getSubscription().setSubscriptionStartDate(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
-        myEntry.getSubscription().setSubscriptionStartEndDate(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).plusDays(7).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
+        myEntry.getSubscription().setSubscriptionStartDate(Utility.getCurrentTime());
+        myEntry.getSubscription().setSubscriptionStartEndDate(Utility.getCurrentTime());
 
         myEntry.setUid(service.generateHashFromPhone(myEntry.getPhoneNumber()));
         return service.saveNewUser(myEntry)

@@ -1,7 +1,9 @@
 package com.example.GameOn.service;
 
+import com.example.GameOn.entity.Booking;
 import com.example.GameOn.entity.Clubs;
 import com.example.GameOn.repository.ClubRepository;
+import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
@@ -33,27 +35,22 @@ public class ClubService {
 
     private final ReactiveValueOperations<String, String> valueOps;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private static final String CLUB_KEY_PREFIX = "club::";
+    private static final String KEY_PREFIX = "club::";
     private static final String ALL_CLUBS_KEY = "all_clubs";
-
+    //    private static final PasswordEncoder passwordEn = new BCryptPasswordEncoder();
     private final ReactiveMongoTemplate mongoTemplate;
-
-
 
     public ClubService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, String> valueOps) {
         this.mongoTemplate = mongoTemplate;
         this.valueOps = valueOps;
     }
 
-//    private static final PasswordEncoder passwordEn = new BCryptPasswordEncoder();
-
     public Mono<Clubs> save(Clubs myEntry){
-        myEntry.setLastUpdatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
-//        return repository.save(myEntry);
+        myEntry.setLastUpdatedOn(Utility.getCurrentTime());
 
         return repository.save(myEntry)
                 .flatMap(savedClub -> {
-                    String key = CLUB_KEY_PREFIX + savedClub.getId();
+                    String key = KEY_PREFIX + savedClub.getId();
                     return redisTemplate.opsForValue().delete(key)       // Invalidate cache
                             .then(Mono.fromCallable(() -> objectMapper.writeValueAsString(savedClub))) // Serialize new data
                             .flatMap(json -> redisTemplate.opsForValue().set(key, json))  // Update cache
@@ -63,9 +60,12 @@ public class ClubService {
 
     public Mono<Clubs> saveNew(Clubs myEntry){
 //        user.setPassword(passwordEn.encode(user.getPassword()));
-        myEntry.setCreatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
-        myEntry.setLastUpdatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
-        return repository.save(myEntry);
+        myEntry.setCreatedOn(Utility.getCurrentTime());
+        myEntry.setLastUpdatedOn(Utility.getCurrentTime());
+        return repository.save(myEntry)
+                .doOnNext(savedEntry -> redisTemplate.opsForValue()
+                        .set(KEY_PREFIX + savedEntry.getId(), Utility.serialize(savedEntry))
+                        .subscribe());
     }
 
     public Flux<Clubs> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
@@ -89,25 +89,20 @@ public class ClubService {
     }
 
     public Mono<Clubs> getById(ObjectId id) {
-        String key = CLUB_KEY_PREFIX + id.toHexString();
+        String key = KEY_PREFIX + id.toHexString();
 
         return redisTemplate.opsForValue().get(key)
                 .flatMap(json -> Mono.fromCallable(() -> objectMapper.readValue(json, Clubs.class)))
                 .onErrorResume(e -> Mono.empty()) // if deserialization fails, ignore cache and load from DB
                 .switchIfEmpty(
-                        repository.findById(id).flatMap(club -> {
-                                    return Mono.fromCallable(() -> objectMapper.writeValueAsString(club))
-                                            .flatMap(json -> redisTemplate.opsForValue().set(key, json,Duration.ofMinutes(5)).thenReturn(club));
-                                })
+                        repository.findById(id).flatMap(entity -> Mono.fromCallable(() -> objectMapper.writeValueAsString(entity))
+                                .flatMap(json -> redisTemplate.opsForValue().set(key, json, Duration.ofMinutes(5)).thenReturn(entity)))
                 );
-
-//        return repository.findById(id);
     }
 
     public void delete(String id){
-        String key = CLUB_KEY_PREFIX + id;
+        String key = KEY_PREFIX + id;
 
-        // Delete from the database and remove from Redis cache
         repository.deleteById(new ObjectId(id))
                 .then(redisTemplate.opsForValue().delete(key))
                 .subscribe();

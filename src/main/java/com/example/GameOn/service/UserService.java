@@ -1,7 +1,11 @@
 package com.example.GameOn.service;
 
+import com.example.GameOn.entity.Ratings;
 import com.example.GameOn.entity.UserDetails.UserProfile;
 import com.example.GameOn.repository.UserRepository;
+import com.example.GameOn.utils.QueryBuilder;
+import com.example.GameOn.utils.Utility;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -11,6 +15,8 @@ import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,10 +24,7 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Date;
 import java.util.Map;
 
@@ -29,200 +32,76 @@ import java.util.Map;
 public class UserService {
 
     @Autowired
+    private ReactiveRedisTemplate<String, String> redisTemplate;
+
+    private final ReactiveValueOperations<String, String> valueOps;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String KEY_PREFIX = "user::";
+    private static final String ALL_KEY = "all_users";
+
+    @Autowired
     UserRepository userRepository;
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public UserService(ReactiveMongoTemplate mongoTemplate) {
+    public UserService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, String> valueOps) {
         this.mongoTemplate = mongoTemplate;
+        this.valueOps = valueOps;
     }
 
-//    private static final PasswordEncoder passwordEn = new BCryptPasswordEncoder();
-
-//    public Flux<Users> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-//        Query query = new Query();
-//
-//        // ✅ Apply dynamic filters
-//        if (filters != null && !filters.isEmpty()) {
-//            filters.forEach((key, value) -> query.addCriteria(Criteria.where(key).is(value)));
-//        }
-//
-//        // ✅ Sorting
-//        if (sortBy != null && !sortBy.isEmpty()) {
-//            Sort.Direction direction = sortOrder.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-//            query.with(Sort.by(direction, sortBy));
-//        }
-//
-//        // ✅ Pagination
-//        query.skip((long) page * size).limit(size);
-//
-//        return mongoTemplate.find(query, Users.class);
-//    }
-
-//    public Flux<Users> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-//        Query query = new Query();
-//
-//        // ✅ Handle age filtering
-//        if (filters != null && !filters.isEmpty()) {
-//            Integer minAge = null;
-//            Integer maxAge = null;
-//
-//            if (filters.containsKey("minAge")) {
-//                minAge = (Integer) filters.remove("minAge");
-//            }
-//            if (filters.containsKey("maxAge")) {
-//                maxAge = (Integer) filters.remove("maxAge");
-//            }
-//
-//            if (minAge != null || maxAge != null) {
-//                LocalDate today = LocalDate.now();
-//
-//                Date minDateOfBirth = null;
-//                Date maxDateOfBirth = null;
-//
-//                if (minAge != null) {
-//                    maxDateOfBirth = Date.from(today.minusYears(minAge).atStartOfDay(ZoneId.systemDefault()).toInstant());
-//                }
-//                if (maxAge != null) {
-//                    minDateOfBirth = Date.from(today.minusYears(maxAge + 1).plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
-//                }
-//
-//                Criteria ageCriteria = Criteria.where("userDetails.personalDetails.dateOfBirth");
-//
-//                if (minDateOfBirth != null && maxDateOfBirth != null) {
-//                    ageCriteria = ageCriteria.gte(minDateOfBirth).lte(maxDateOfBirth);
-//                } else if (minDateOfBirth != null) {
-//                    ageCriteria = ageCriteria.gte(minDateOfBirth);
-//                } else if (maxDateOfBirth != null) {
-//                    ageCriteria = ageCriteria.lte(maxDateOfBirth);
-//                }
-//
-//                query.addCriteria(ageCriteria);
-//            }
-//
-//            // ✅ Apply remaining filters
-//            filters.forEach((key, value) -> query.addCriteria(Criteria.where(key).is(value)));
-//        }
-//
-//        // ✅ Sorting
-//        if (sortBy != null && !sortBy.isEmpty()) {
-//            Sort.Direction direction = sortOrder.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-//            query.with(Sort.by(direction, sortBy));
-//        }
-//
-//        // ✅ Pagination
-//        query.skip((long) page * size).limit(size);
-//
-//        return mongoTemplate.find(query, Users.class);
-//    }
-
     public Flux<UserProfile> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-        Query query = new Query();
-
-        // ✅ Handle age filtering
-        if (filters != null && !filters.isEmpty()) {
-            Integer minAge = null;
-            Integer maxAge = null;
-
-            if (filters.containsKey("minAge")) {
-                minAge = (Integer) filters.remove("minAge");
-            }
-            if (filters.containsKey("maxAge")) {
-                maxAge = (Integer) filters.remove("maxAge");
-            }
-
-            if (minAge != null || maxAge != null) {
-                LocalDate today = LocalDate.now();
-
-                Date minDateOfBirth = null;
-                Date maxDateOfBirth = null;
-
-                if (minAge != null) {
-                    maxDateOfBirth = Date.from(today.minusYears(minAge).atStartOfDay(ZoneId.systemDefault()).toInstant());
-                }
-                if (maxAge != null) {
-                    minDateOfBirth = Date.from(today.minusYears(maxAge + 1).plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
-                }
-
-                Criteria ageCriteria = Criteria.where("userDetails.personalDetails.dateOfBirth");
-
-                if (minDateOfBirth != null && maxDateOfBirth != null) {
-                    ageCriteria = ageCriteria.gte(minDateOfBirth).lte(maxDateOfBirth);
-                } else if (minDateOfBirth != null) {
-                    ageCriteria = ageCriteria.gte(minDateOfBirth);
-                } else if (maxDateOfBirth != null) {
-                    ageCriteria = ageCriteria.lte(maxDateOfBirth);
-                }
-
-                query.addCriteria(ageCriteria);
-            }
-
-            // ✅ Handle geospatial filter
-            if (filters.containsKey("latitude") && filters.containsKey("longitude") && filters.containsKey("distanceInKm")) {
-                Double latitude = (Double) filters.remove("latitude");
-                Double longitude = (Double) filters.remove("longitude");
-                Double distanceInKm = (Double) filters.remove("distanceInKm");
-                double radians = distanceInKm / 6378.1;
-
-                Point location = new Point(longitude, latitude);
-
-                query.addCriteria(Criteria.where("userDetails.personalDetails.location")
-                        .nearSphere(location)
-                        .maxDistance(radians));
-            }
-
-            // ✅ Apply remaining filters
-            filters.forEach((key, value) -> query.addCriteria(Criteria.where(key).is(value)));
-        }
-
-        // ✅ Sorting
-        if (sortBy != null && !sortBy.isEmpty()) {
-            Sort.Direction direction = sortOrder.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-            query.with(Sort.by(direction, sortBy));
-        }
-
-        // ✅ Pagination
-        query.skip((long) page * size).limit(size);
-
+        String key = Utility.generateCacheKey(KEY_PREFIX,filters,page,size,sortBy,sortOrder);
+        Query query = QueryBuilder.buildQuery(filters,page,size,sortBy,sortOrder);
         return mongoTemplate.find(query, UserProfile.class);
     }
 
-
     public Mono<UserProfile> saveUser(UserProfile user){
-        user.setLastUpdatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
-        return userRepository.save(user);
+        user.setLastUpdatedOn(Utility.getCurrentTime());
+        return userRepository.save(user)
+                .flatMap(savedEntity -> {
+            String key = KEY_PREFIX + savedEntity.getId();
+            return redisTemplate.opsForValue().delete(key)       // Invalidate cache
+                    .then(Mono.fromCallable(() -> objectMapper.writeValueAsString(savedEntity))) // Serialize new data
+                    .flatMap(json -> redisTemplate.opsForValue().set(key, json))  // Update cache
+                    .thenReturn(savedEntity);
+        });
     }
 
     public Mono<UserProfile> findByUserId(String userId){
         return userRepository.findByUid(userId);
     }
 
-//    public Page<Users> getAllUsers(Pageable pageable) {
-//        return userRepository.findAll(pageable);
-//    }
+    public Mono<UserProfile> saveNewUser(UserProfile myEntry){
+        myEntry.setCreatedOn(Utility.getCurrentTime());
+        myEntry.setLastUpdatedOn(Utility.getCurrentTime());
 
-    public Mono<UserProfile> saveNewUser(UserProfile user){
-//        user.setPassword(passwordEn.encode(user.getPassword()));
-        user.setCreatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
-        user.setLastUpdatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant(ZoneId.of("UTC").getRules().getOffset(Instant.now())).toEpochMilli());
-        return userRepository.save(user);
-    }
-
-    public Flux<UserProfile> getAll(){
-        return userRepository.findAll();
+        return userRepository.save(myEntry)
+                .doOnNext(savedEntry -> redisTemplate.opsForValue()
+                        .set(KEY_PREFIX + savedEntry.getId(), Utility.serialize(savedEntry))
+                        .subscribe());
     }
 
     public Mono<UserProfile> getById(ObjectId id){
-        return userRepository.findById(id);
+        String key = KEY_PREFIX + id.toHexString();
+
+        return redisTemplate.opsForValue().get(key)
+                .flatMap(json -> Mono.fromCallable(() -> objectMapper.readValue(json, UserProfile.class)))
+                .onErrorResume(e -> Mono.empty()) // if deserialization fails, ignore cache and load from DB
+                .switchIfEmpty(
+                        userRepository.findById(id).flatMap(entry -> Mono.fromCallable(() -> objectMapper.writeValueAsString(entry))
+                                .flatMap(json -> redisTemplate.opsForValue().set(key, json, Duration.ofMinutes(5)).thenReturn(entry)))
+                );
+//        return userRepository.findById(id);
     }
 
     public void delete(ObjectId id){
-        userRepository.deleteById(id);
-    }
+        String key = KEY_PREFIX + id.toHexString();
 
-//    public Mono<Users> findByUserName(String username){
-//        return userRepository.findByUserName(username);
-//    }
+        userRepository.deleteById(id)
+                .then(redisTemplate.opsForValue().delete(key))
+                .subscribe();
+//        userRepository.deleteById(id);
+    }
 
     public String generateHashFromPhone(String phone) {
         try {

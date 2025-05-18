@@ -61,6 +61,7 @@ public class DiscoveryController {
             @RequestParam(required = false) Double lon,
             @RequestParam(required = false) Double distanceInKm,
             @RequestParam(required = false) SexualPreference sexualPreference,
+            @RequestParam(required = false) String planId,
             @RequestParam(required = false) LookingFor lookingFor,
             @RequestParam(required = false) City city,
             @RequestParam(required = false) States state,
@@ -81,6 +82,9 @@ public class DiscoveryController {
            return null;
        });
 
+        if (Objects.nonNull(planId)) {
+            filterMap.put("subscription.planId", planId);
+        }
         if (Objects.nonNull(skills)) {
             filterMap.put("skills", skills);
         }
@@ -90,9 +94,6 @@ public class DiscoveryController {
         if (Objects.nonNull(isVerified)) {
             filterMap.put("isVerified", isVerified);
         }
-//        if (Objects.nonNull(planId)) {
-//            filterMap.put("planId", planId);
-//        }
         if (Objects.nonNull(gender)) {
             filterMap.put("userDetails.gender", gender);
         }
@@ -112,7 +113,7 @@ public class DiscoveryController {
             filterMap.put("userDetails.languages", languages);
         }
         if (Objects.nonNull(hobby)) {
-            filterMap.put("userDetails.hobby", hobby);
+            filterMap.put("userDetails.hobbies", hobby);
         }
         if (Objects.nonNull(workout)) {
             filterMap.put("userDetails.personalPreference.workout", workout);
@@ -127,10 +128,10 @@ public class DiscoveryController {
             filterMap.put("userDetails.lookingFor", lookingFor);
         }
         if (Objects.nonNull(city)) {
-            filterMap.put("userDetails.personalDetails.location.city", city);
+            filterMap.put("location.city", city);
         }
         if (Objects.nonNull(state)) {
-            filterMap.put("userDetails.personalDetails.location.state", state);
+            filterMap.put("location.state", state);
         }
         if (Objects.nonNull(minAge)) {
             filterMap.put("minAge", minAge);

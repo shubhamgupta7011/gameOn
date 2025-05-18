@@ -4,7 +4,9 @@ import com.example.GameOn.enums.EventStatus;
 import com.example.GameOn.enums.EventType;
 import com.example.GameOn.enums.Skills;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.util.List;
 
@@ -21,4 +23,10 @@ public class Booking {
     private EventType type;
     private Skills skills;
     private int noOfParticipants;
+
+    @CreatedDate
+    private Long createdOn;
+
+    @LastModifiedDate
+    private Long lastUpdatedOn;
 }
