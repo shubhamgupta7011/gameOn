@@ -3,12 +3,13 @@ package com.example.GameOn.service;
 import com.example.GameOn.entity.UserDetails.UserProfile;
 import com.example.GameOn.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 
-@Component
+@Service
 public class LocationService {
 
     @Autowired

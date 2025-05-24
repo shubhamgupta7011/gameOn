@@ -1,12 +1,7 @@
 package com.example.GameOn.config;
 
-import com.example.GameOn.entity.Clubs;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -14,8 +9,8 @@ import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.data.redis.serializer.*;
-import reactor.core.publisher.Mono;
 
+@Slf4j
 @Configuration
 public class RedisConfig {
 
@@ -49,17 +44,17 @@ public class RedisConfig {
 
     @PostConstruct
     public void testRedisConnection() {
-        System.out.println("🔄 Testing Redis Connection...");
+        log.info("🔄 Testing Redis Connection...");
         factory.getReactiveConnection()
                 .ping()
                 .doOnNext(pong -> {
                     if ("PONG".equals(pong)) {
-                        System.out.println("✅ Redis Connection Established Successfully!");
+                        log.info("✅ Redis Connection Established Successfully!");
                     } else {
-                        System.out.println("❌ Redis Connection Failed!");
+                        log.error("❌ Redis Connection Failed!");
                     }
                 })
-                .doOnError(error -> System.out.println("❌ Redis Connection Error: " + error.getMessage()))
+                .doOnError(error -> log.error("❌ Redis Connection Error: " + error.getMessage()))
                 .subscribe();
     }
 }

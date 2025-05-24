@@ -53,21 +53,20 @@ public class PlansController {
                 .collectList() // Convert Flux to Mono<List<PlansAndOffers>>
                 .flatMap(PlansAndOffers -> {
                     if (PlansAndOffers.isEmpty()) {
-                        System.out.println("No PlansAndOffers found.");
+                        log.info("No PlansAndOffers found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
                     } else {
                         return Mono.just(ResponseEntity.ok(PlansAndOffers));
                     }
                 })
                 .onErrorResume(e -> {
-                    System.err.println("Error fetching PlansAndOffers: " + e.getMessage());
+                    log.error("Error fetching PlansAndOffers: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
 
     @Operation(
-            summary = "Create New Plans",
-            description = "To Create new Plans/Subscription For Users"
+            summary = "Create New Plans", description = "To Create new Plans/Subscription For Users"
     )
     @PostMapping("/add")
     public Mono<ResponseEntity<PlansAndOffers>> saveNew(@RequestBody PlansAndOffers myEntry){
@@ -81,8 +80,7 @@ public class PlansController {
     }
 
     @Operation(
-            summary = "Fetch PlansAndOffers by id",
-            description = "To fetch PlansAndOffers by id"
+            summary = "Fetch PlansAndOffers by id", description = "To fetch PlansAndOffers by id"
     )
     @Cacheable(value = "plan", key = "#id")
     @GetMapping("/{id}")
@@ -94,8 +92,7 @@ public class PlansController {
     }
 
     @Operation(
-            summary = "To Delete PlansAndOffers",
-            description = "To Delete PlansAndOffers when not in use"
+            summary = "To Delete PlansAndOffers", description = "To Delete PlansAndOffers when not in use"
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
@@ -104,8 +101,7 @@ public class PlansController {
     }
 
     @Operation(
-            summary = "Update Plans",
-            description = "To Update old Plans"
+            summary = "Update Plans", description = "To Update old Plans"
     )
     @PutMapping("/update")
     public Mono<ResponseEntity<PlansAndOffers>> update(@RequestBody Mono<PlansAndOffers> myEntryMono) {
@@ -116,7 +112,7 @@ public class PlansController {
                 .doOnError(error -> log.error("Error saving PlansAndOffers", error))
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no PlansAndOffers, return 404
                 .onErrorResume(e -> {
-                    System.err.println("Error updating PlansAndOffers: " + e.getMessage());
+                    log.error("Error updating PlansAndOffers: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

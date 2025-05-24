@@ -37,7 +37,6 @@ public class SwipeController {
     public Mono<ResponseEntity<Map<String, Boolean>>> swipe(
             @RequestParam String swiperId, @RequestParam String swipeeId, @RequestParam SwipeType swipeType
     ) {
-
         return swipeService.saveSwipe(swiperId, swipeeId, swipeType)
                 .then(swipeService.isMatch(swiperId, swipeeId))
                 .map(isMatch -> ResponseEntity.ok(Map.of("match", isMatch)));

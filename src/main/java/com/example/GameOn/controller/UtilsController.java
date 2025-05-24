@@ -37,7 +37,7 @@ public class UtilsController {
     public Mono<ResponseEntity<String>> searchLocation(@PathVariable Double lat, @PathVariable Double lon) {
         return nominatimApiClient.getLocationDetails(lat, lon)
                 .map(response -> {
-                    System.out.println("✅ [Final Response Body]: " + response); // Log final response
+                    log.info("✅ [Final Response Body]: " + response); // Log final response
                     return ResponseEntity.ok()
                             .header("Content-Type", "application/json")
                             .body(response);

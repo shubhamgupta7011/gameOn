@@ -70,60 +70,41 @@ public class UserController {
 
         Map<String, Object> filterMap = new HashMap<>();
 
-        if (Objects.nonNull(minAge)) {
-            filterMap.put("minAge", minAge);
-        }
-        if (Objects.nonNull(maxAge)) {
-            filterMap.put("maxAge", maxAge);
-        }
-        if (Objects.nonNull(skills)) {
-            filterMap.put("userDetails.skills", skills);
-        }
-        if (Objects.nonNull(isDeleted)) {
-            filterMap.put("isDeleted", isDeleted);
-        }
-        if (Objects.nonNull(isVerified)) {
-            filterMap.put("isVerified", isVerified);
-        }
-        if (Objects.nonNull(planId)) {
-            filterMap.put("subscription.planId", planId);
-        }
-        if (Objects.nonNull(gender)) {
-            filterMap.put("userDetails.gender", gender);
-        }
-        if (Objects.nonNull(securityRating)) {
-            filterMap.put("userDetails.securityRating", securityRating);
-        }
-        if (Objects.nonNull(drinking)) {
-            filterMap.put("userDetails.personalPreference.drinking", drinking);
-        }
-        if (Objects.nonNull(smoking)) {
-            filterMap.put("userDetails.personalPreference.smoking", smoking);
-        }
-        if (Objects.nonNull(languages)) {
-            filterMap.put("userDetails.languages", languages);
-        }
-        if (Objects.nonNull(hobby)) {
-            filterMap.put("userDetails.hobbies", hobby);
-        }
-        if (Objects.nonNull(workout)) {
-            filterMap.put("userDetails.personalPreference.workout", workout);
-        }
-        if (Objects.nonNull(diet)) {
-            filterMap.put("userDetails.personalPreference.diet", diet);
-        }
-        if (Objects.nonNull(sexualPreference)) {
-            filterMap.put("userDetails.personalDetails.sexualPreference", sexualPreference);
-        }
-        if (Objects.nonNull(lookingFor)) {
-            filterMap.put("userDetails.lookingFor", lookingFor);
-        }
-        if (Objects.nonNull(city)) {
-            filterMap.put("location.city", city);
-        }
-        if (Objects.nonNull(state)) {
-            filterMap.put("location.state", state);
-        }
+        if (Objects.nonNull(minAge)) filterMap.put("minAge", minAge);
+
+        if (Objects.nonNull(maxAge)) filterMap.put("maxAge", maxAge);
+
+        if (Objects.nonNull(skills)) filterMap.put("userDetails.skills", skills);
+
+        if (Objects.nonNull(isDeleted)) filterMap.put("isDeleted", isDeleted);
+
+        if (Objects.nonNull(isVerified)) filterMap.put("isVerified", isVerified);
+
+        if (Objects.nonNull(planId)) filterMap.put("subscription.planId", planId);
+
+        if (Objects.nonNull(gender)) filterMap.put("userDetails.gender", gender);
+
+        if (Objects.nonNull(securityRating)) filterMap.put("userDetails.securityRating", securityRating);
+
+        if (Objects.nonNull(drinking)) filterMap.put("userDetails.personalPreference.drinking", drinking);
+
+        if (Objects.nonNull(smoking)) filterMap.put("userDetails.personalPreference.smoking", smoking);
+
+        if (Objects.nonNull(languages)) filterMap.put("userDetails.languages", languages);
+
+        if (Objects.nonNull(hobby)) filterMap.put("userDetails.hobbies", hobby);
+
+        if (Objects.nonNull(workout)) filterMap.put("userDetails.personalPreference.workout", workout);
+
+        if (Objects.nonNull(diet)) filterMap.put("userDetails.personalPreference.diet", diet);
+
+        if (Objects.nonNull(sexualPreference)) filterMap.put("userDetails.personalDetails.sexualPreference", sexualPreference);
+
+        if (Objects.nonNull(lookingFor)) filterMap.put("userDetails.lookingFor", lookingFor);
+
+        if (Objects.nonNull(city)) filterMap.put("location.city", city);
+
+        if (Objects.nonNull(state)) filterMap.put("location.state", state);
 
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
                 .collectList() // Convert Flux to Mono<List<User>>
@@ -246,7 +227,7 @@ public class UserController {
                 .doOnError(error -> log.error("Error saving User", error))
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no User, return 404
                 .onErrorResume(e -> {
-                    System.err.println("Error updating User: " + e.getMessage());
+                    log.error("Error updating User: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -327,7 +308,6 @@ public class UserController {
             return ResponseEntity.ok(userId);
         });
     }
-
 
     @Operation(
             summary = "Fetch Phone Number",

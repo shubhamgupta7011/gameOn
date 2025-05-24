@@ -1,6 +1,5 @@
 package com.example.GameOn.service;
 
-import com.example.GameOn.entity.UserDetails.UserProfile;
 import com.example.GameOn.entity.Venue;
 import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.repository.VenueRepository;
@@ -8,28 +7,18 @@ import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.ReactiveValueOperations;
-import org.springframework.stereotype.Component;
+
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-@Component
+@Service
 public class VenueService {
 
     @Autowired

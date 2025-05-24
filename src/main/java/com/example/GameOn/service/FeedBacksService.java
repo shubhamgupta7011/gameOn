@@ -10,14 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
 
-@Component
+@Service
 public class FeedBacksService {
 
     @Autowired
@@ -59,14 +59,12 @@ public class FeedBacksService {
     }
 
     public Mono<Feedback> saveNewFeedback(Feedback myEntry){
-//        user.setPassword(passwordEn.encode(user.getPassword()));
         myEntry.setCreatedOn(Utility.getCurrentTime());
         myEntry.setLastUpdatedOn(Utility.getCurrentTime());
         return repository.save(myEntry)
                 .doOnNext(savedEntry -> redisTemplate.opsForValue()
                         .set(KEY_PREFIX + savedEntry.getId(), Utility.serialize(savedEntry))
                         .subscribe());
-//        return repository.save(feedback);
     }
 
     public Flux<Feedback> getByVenueId(String id) {

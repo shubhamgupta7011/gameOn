@@ -12,8 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.ReactiveValueOperations;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,14 +20,13 @@ import java.time.Duration;
 import java.util.Map;
 
 
-@Component
+@Service
 @Slf4j
 public class AmenityService {
 
     @Autowired
     private ReactiveRedisTemplate<String, String> redisTemplate;
 
-    private final ReactiveValueOperations<String, String> valueOps;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final String KEY_PREFIX = "amenity::";
     private static final String ALL_KEY_PREFIX = "all_amenities";
@@ -39,9 +37,8 @@ public class AmenityService {
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public AmenityService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, String> valueOps) {
+    public AmenityService(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.valueOps = valueOps;
     }
 
     public Flux<Amenity> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
@@ -66,14 +63,12 @@ public class AmenityService {
     }
 
     public Mono<Amenity> saveNew(Amenity myEntry) {
-//        user.setPassword(passwordEn.encode(user.getPassword()));
         myEntry.setCreatedOn(Utility.getCurrentTime());
         myEntry.setLastUpdatedOn(Utility.getCurrentTime());
         return repository.save(myEntry)
-                .doOnNext(savedEntry -> redisTemplate.opsForValue()
-                        .set(KEY_PREFIX + savedEntry.getId(), Utility.serialize(savedEntry))
-                        .subscribe());
-//        return repository.save(myEntry);
+                .doOnNext(savedEntry ->
+                        Utility.cacheItem(KEY_PREFIX + savedEntry.getId(),savedEntry,redisTemplate)
+                );
     }
 
     public Mono<Amenity> getById(ObjectId id) {
@@ -86,7 +81,6 @@ public class AmenityService {
                         repository.findById(id).flatMap(entry -> Mono.fromCallable(() -> objectMapper.writeValueAsString(entry))
                                 .flatMap(json -> redisTemplate.opsForValue().set(key, json, Duration.ofMinutes(5)).thenReturn(entry)))
                 );
-//        return repository.findById(id);
     }
 
     public Flux<Amenity> getByVenueId(String id) {
@@ -96,21 +90,9 @@ public class AmenityService {
                 .flatMapMany(a -> Utility.deserializeList(a, Amenity.class))
                 .switchIfEmpty(repository.findByVenueId(id)
                         .collectList()
-                        .doOnNext(amenities -> {
-                                    try {
-                                        redisTemplate.opsForValue()
-                                                .set(key, objectMapper.writeValueAsString(amenities)).subscribe();
-                                    } catch (JsonProcessingException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                        )
+                        .doOnNext(amenities -> Utility.cacheItem(key,amenities,redisTemplate))
                         .flatMapMany(Flux::fromIterable));
     }
-
-//    public Flux<Amenity> getByVenueId(String id){
-//        return repository.findByVenueId(id);
-//    }
 
     public void delete(ObjectId id) {
         String key = KEY_PREFIX + id.toHexString();

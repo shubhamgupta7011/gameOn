@@ -75,7 +75,7 @@ public class Utility {
         try {
             return objectMapper.writeValueAsString(club);
         } catch (Exception e) {
-            throw new RuntimeException("Error serializing Club object", e);
+            throw new RuntimeException("Error serializing object", e);
         }
     }
 

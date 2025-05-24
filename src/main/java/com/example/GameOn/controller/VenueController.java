@@ -45,25 +45,20 @@ public class VenueController {
 
         Map<String, Object> filterMap = new HashMap<>();
 
-        if (Objects.nonNull(skills)) {
-            filterMap.put("skills", skills);
-        }
-        if (Objects.nonNull(availability)) {
-            filterMap.put("availability", availability);
-        }
+        if (Objects.nonNull(skills)) filterMap.put("skills", skills);
+
+        if (Objects.nonNull(availability)) filterMap.put("availability", availability);
 
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
                 .collectList() // Convert Flux to Mono<List<Venue>>
                 .flatMap(venues -> {
                     if (venues.isEmpty()) {
-                        System.out.println("No venues found.");
+                        log.info("No venues found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-                    } else {
-                        return Mono.just(ResponseEntity.ok(venues));
-                    }
+                    } else return Mono.just(ResponseEntity.ok(venues));
                 })
                 .onErrorResume(e -> {
-                    System.err.println("Error fetching venues: " + e.getMessage());
+                    log.error("Error fetching venues: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -74,7 +69,6 @@ public class VenueController {
     )
     @PostMapping("/add")
     public Mono<ResponseEntity<Venue>> saveNew(@RequestBody Venue myEntry){
-
             return service.saveNew(myEntry)
                     .doOnNext(saved -> log.info("Venue saved successfully: {}", saved))
                     .doOnError(error -> log.error("Error saving Venue", error))
@@ -109,8 +103,7 @@ public class VenueController {
                             .availability(ven.getAvailability()).feedbacks(ven.getFeedbacks())
                             .createdOn(ven.getCreatedOn()).lastUpdatedOn(ven.getLastUpdatedOn()).build();
                         }
-                )
-                .flatMap(venue -> {
+                ).flatMap(venue -> {
                     return amenityService.getByVenueId(venue.getId()).collectList()
                             .map(amenities -> {
                                 venue.setAmenitiesObj(amenities); // <- set fetched Amenity objects
@@ -145,7 +138,7 @@ public class VenueController {
                 .doOnError(error -> log.error("Error saving Venue", error))
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no venue, return 404
                 .onErrorResume(e -> {
-                    System.err.println("Error updating venue: " + e.getMessage());
+                    log.error("Error updating venue: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

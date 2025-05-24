@@ -62,14 +62,14 @@ public class AmenityController {
                 .collectList() // Convert Flux to Mono<List<Amenity>>
                 .flatMap(amenities -> {
                     if (amenities.isEmpty()) {
-                        System.out.println("No Amenity found.");
+                        log.error("No Amenity found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
                     } else {
                         return Mono.just(ResponseEntity.ok(amenities));
                     }
                 })
                 .onErrorResume(e -> {
-                    System.err.println("Error fetching Amenity: " + e.getMessage());
+                    log.error("Error fetching Amenity: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

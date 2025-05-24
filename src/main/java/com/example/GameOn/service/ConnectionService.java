@@ -5,23 +5,16 @@ import com.example.GameOn.entity.ConnectionRequest;
 import com.example.GameOn.enums.RequestStatus;
 import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.repository.ConnectionRepository;
-import com.example.GameOn.repository.ConnectionRequestRepository;
+//import com.example.GameOn.repository.ConnectionRequestRepository;
 import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.ReactiveValueOperations;
-import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.util.Map;
 
-@Component
+@Service
 public class ConnectionService {
 
     @Autowired

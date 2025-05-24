@@ -86,7 +86,7 @@ public class DiscoveryController {
             filterMap.put("subscription.planId", planId);
         }
         if (Objects.nonNull(skills)) {
-            filterMap.put("skills", skills);
+            filterMap.put("userDetails.skills", skills);
         }
         if (Objects.nonNull(isDeleted)) {
             filterMap.put("isDeleted", isDeleted);
@@ -175,8 +175,7 @@ public class DiscoveryController {
     )
     @GetMapping("/nearby")
     public Flux<UserProfile> getNearbyUsers(
-            @RequestParam double lat,
-            @RequestParam double lon,
+            @RequestParam double lat, @RequestParam double lon,
             @RequestParam(defaultValue = "10") double radiusKm
     ) {
         return locationService.findNearbyUsers(lat, lon, radiusKm);

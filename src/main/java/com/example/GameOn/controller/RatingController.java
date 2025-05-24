@@ -49,14 +49,12 @@ public class RatingController {
                 .collectList() // Convert Flux to Mono<List<Rating>>
                 .flatMap(rating -> {
                     if (rating.isEmpty()) {
-                        System.out.println("No rating found.");
+                        log.info("No rating found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-                    } else {
-                        return Mono.just(ResponseEntity.ok(rating));
-                    }
+                    } else return Mono.just(ResponseEntity.ok(rating));
                 })
                 .onErrorResume(e -> {
-                    System.err.println("Error fetching rating: " + e.getMessage());
+                    log.error("Error fetching rating: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -73,7 +71,7 @@ public class RatingController {
                 .doOnError(error -> log.error("Error Ratings rating", error))
                 .map(savedEntry -> ResponseEntity.status(HttpStatus.CREATED).body(savedEntry)) // Return 201 CREATED
                 .onErrorResume(e -> {
-                    System.err.println("Error saving document: " + e.getMessage());
+                    log.error("Error saving document: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
                 });
     }
@@ -90,7 +88,7 @@ public class RatingController {
                 .doOnError(error -> log.error("Error Ratings rating", error))
                 .map(savedEntry -> ResponseEntity.status(HttpStatus.CREATED).body(savedEntry)) // Return 201 CREATED
                 .onErrorResume(e -> {
-                    System.err.println("Error saving document: " + e.getMessage());
+                    log.error("Error saving document: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
                 });
     }
@@ -139,8 +137,7 @@ public class RatingController {
     }
 
     @Operation(
-            summary = "Update Ratings",
-            description = "To update ratings of the user"
+            summary = "Update Ratings", description = "To update ratings of the user"
     )
     @PutMapping("/update")
     public Mono<ResponseEntity<Ratings>> update(@RequestBody Mono<Ratings> myEntry) {
@@ -151,7 +148,7 @@ public class RatingController {
                 .doOnNext(saved -> log.info("Ratings saved successfully: {}", saved))
                 .doOnError(error -> log.error("Error Ratings rating", error))
                 .onErrorResume(e -> {
-                    System.err.println("Error updating rating: " + e.getMessage());
+                    log.error("Error updating rating: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

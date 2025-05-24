@@ -3,11 +3,13 @@ package com.example.GameOn.service;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
 
 @Service
+@Slf4j
 public class OTPService {
 //    Recovery code :- K6LDH1786DHZJNRSUEJ42GQY
     // Twilio account SID and authentication token
@@ -27,7 +29,7 @@ public class OTPService {
                 "Your OTP is: " + otp
         ).create();
 
-        System.out.println("Message sent: " + message.getSid());
+        log.info("Message sent: " + message.getSid());
     }
 
     public String generateOTP() {

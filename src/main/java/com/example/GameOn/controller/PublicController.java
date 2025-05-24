@@ -23,49 +23,6 @@ import java.util.Map;
 @Slf4j
 public class PublicController {
 
-//    @Autowired
-//    private AuthenticationManager authenticationManager;
-//
-//    @Autowired
-//    private UserDetailsServiceImpl userDetailsService;
-//
-//    @Autowired
-//    private JWTUtils jwtUtils;
-//
-//    @Autowired
-//    UserService userService;
-//
-//    @GetMapping("/health-check")
-//    public static String healthCheck() {
-//        return "Ok";
-//    }
-//
-//    @PostMapping("/signup")
-//    public ResponseEntity<Users> signup(@RequestBody Users myEntry){
-//        try {
-////            myEntry.setDate(LocalDateTime.now());
-//            userService.saveNewUser(myEntry);
-//            return new ResponseEntity<>(myEntry, HttpStatus.CREATED);
-//        }catch (Exception exception){
-//            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-//        }
-//    }
-//
-//    @PostMapping("/login")
-//    public ResponseEntity<String> login(@RequestBody Users myEntry){
-//        try {
-//            authenticationManager.authenticate(
-//                    new UsernamePasswordAuthenticationToken(myEntry.getUserName(),myEntry.getPassword())
-//            );
-//            UserDetails userDetails = userDetailsService.loadUserByUsername(myEntry.getUserName());
-//            String jwt=jwtUtils.generateToken(userDetails.getUsername());
-//            return new ResponseEntity<>(jwt,HttpStatus.OK);
-//        }catch (Exception exception){
-//            log.error("Exception occurred");
-//            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-//        }
-//    }
-
     @Autowired
     private OTPService otpService;
 

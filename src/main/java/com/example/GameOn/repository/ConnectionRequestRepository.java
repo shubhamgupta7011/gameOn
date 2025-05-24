@@ -1,6 +1,5 @@
 package com.example.GameOn.repository;
 
-import com.example.GameOn.entity.Connection;
 import com.example.GameOn.entity.ConnectionRequest;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
@@ -13,5 +12,5 @@ public interface ConnectionRequestRepository extends ReactiveMongoRepository<Con
 //    @Query("{$and: ?#{[0]}}") // SpEL to dynamically construct query
 //    List<Booking> findByDynamicFilters(List<Object> filters, Pageable pageable);
 
-    Flux<Connection> findByUsersId(String venueId);
+//    Flux<ConnectionRequest> findByUsersId(String venueId);
 }

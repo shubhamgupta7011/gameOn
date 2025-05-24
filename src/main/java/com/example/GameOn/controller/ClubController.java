@@ -43,25 +43,20 @@ public class ClubController {
 
         Map<String, Object> filterMap = new HashMap<>();
 
-        if (Objects.nonNull(skills)) {
-            filterMap.put("skills", skills);
-        }
-        if (Objects.nonNull(availability)) {
-            filterMap.put("availability", availability);
-        }
+        if (Objects.nonNull(skills)) filterMap.put("skills", skills);
+
+        if (Objects.nonNull(availability)) filterMap.put("availability", availability);
 
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
                 .collectList() // Convert Flux to Mono<List<Clubs>>
                 .flatMap(Clubs -> {
                     if (Clubs.isEmpty()) {
-                        System.out.println("No Clubs found.");
+                        log.info("No Clubs found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-                    } else {
-                        return Mono.just(ResponseEntity.ok(Clubs));
-                    }
+                    } else return Mono.just(ResponseEntity.ok(Clubs));
                 })
                 .onErrorResume(e -> {
-                    System.err.println("Error fetching Clubs: " + e.getMessage());
+                    log.error("Error fetching Clubs: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -72,13 +67,11 @@ public class ClubController {
     )
     @PostMapping("/add")
     public Mono<ResponseEntity<Clubs>> saveNew(@RequestBody Clubs myEntry){
-
             return service.saveNew(myEntry)
                     .doOnNext(saved -> log.info("Clubs saved successfully: {}", saved))
                     .doOnError(error -> log.error("Error saving Clubs", error))
                     .map(x->new ResponseEntity<>(x, HttpStatus.CREATED))
                     .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-
     }
 
     @Operation(
@@ -115,7 +108,7 @@ public class ClubController {
                 .doOnError(error -> log.error("Error saving Clubs", error))
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no Clubs, return 404
                 .onErrorResume(e -> {
-                    System.err.println("Error updating Clubs: " + e.getMessage());
+                    log.error("Error updating Clubs: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -40,25 +41,22 @@ public class FeedBackController {
 
         Map<String, Object> filterMap = new HashMap<>();
 
-        if (Objects.nonNull(skills)) {
-            filterMap.put("skills", skills);
-        }
-        if (Objects.nonNull(availability)) {
-            filterMap.put("availability", availability);
-        }
+        if (Objects.nonNull(skills)) filterMap.put("skills", skills);
+
+        if (Objects.nonNull(availability)) filterMap.put("availability", availability);
 
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
                 .collectList() // Convert Flux to Mono<List<Feedback>>
                 .flatMap(feedback -> {
                     if (feedback.isEmpty()) {
-                        System.out.println("No FeedBack found.");
+                        log.info("No FeedBack found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
                     } else {
                         return Mono.just(ResponseEntity.ok(feedback));
                     }
                 })
                 .onErrorResume(e -> {
-                    System.err.println("Error fetching FeedBack: " + e.getMessage());
+                    log.error("Error fetching FeedBack: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -93,6 +91,17 @@ public class FeedBackController {
             summary = "Fetch all Amenity",
             description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
     )
+    @GetMapping("/venue_id/{id}")
+    public Flux<ResponseEntity<Feedback>> getByVenueId(@PathVariable String id) {
+        Flux<Feedback> re = service.getByVenueId(id);
+        return re.map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
+                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @Operation(
+            summary = "Fetch all Amenity",
+            description = "To fetch Amenity and their details on the bases of different filters and we can sort them of different fields"
+    )
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);
@@ -112,7 +121,7 @@ public class FeedBackController {
                 .doOnNext(saved -> log.info("Feedback saved successfully: {}", saved))
                 .doOnError(error -> log.error("Error Feedback update", error))
                 .onErrorResume(e -> {
-                    System.err.println("Error updating Feedback: " + e.getMessage());
+                    log.error("Error updating Feedback: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
