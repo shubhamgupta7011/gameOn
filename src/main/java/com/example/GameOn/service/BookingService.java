@@ -1,28 +1,21 @@
 package com.example.GameOn.service;
 
-import com.example.GameOn.entity.Amenity;
 import com.example.GameOn.entity.Booking;
-import com.example.GameOn.entity.Clubs;
-import com.example.GameOn.entity.Venue;
+import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.repository.BookingRepository;
 import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Component
 public class BookingService {
@@ -30,7 +23,6 @@ public class BookingService {
     @Autowired
     private ReactiveRedisTemplate<String, String> redisTemplate;
 
-    private final ReactiveValueOperations<String, String> valueOps;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final String KEY_PREFIX = "booking::";
     private static final String ALL_KEY_PREFIX = "all_bookings";
@@ -41,9 +33,8 @@ public class BookingService {
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public BookingService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, String> valueOps) {
+    public BookingService(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.valueOps = valueOps;
     }
 
     public Mono<Booking> save(Booking myEntry){
@@ -58,23 +49,12 @@ public class BookingService {
     }
 
     public Flux<Booking> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-        Query query = new Query();
+        String key = Utility.generateCacheKey(ALL_KEY_PREFIX,filters,page,size,sortBy,sortOrder);
+        Query query = QueryBuilder.buildQuery(filters, page, size, sortBy, sortOrder);
 
-        // ✅ Apply dynamic filters
-        if (filters != null && !filters.isEmpty()) {
-            filters.forEach((key, value) -> query.addCriteria(Criteria.where(key).is(value)));
-        }
-
-        // ✅ Sorting
-        if (sortBy != null && !sortBy.isEmpty()) {
-            Sort.Direction direction = sortOrder.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-            query.with(Sort.by(direction, sortBy));
-        }
-
-        // ✅ Pagination
-        query.skip((long) page * size).limit(size);
-
-        return mongoTemplate.find(query, Booking.class);
+        return redisTemplate.opsForValue().get(key)
+                .flatMapMany(cachedData -> Utility.deserializeCache(cachedData,  Booking[].class))
+                .switchIfEmpty(Utility.fetchAndCacheFromDB(query, key, Booking.class, mongoTemplate,redisTemplate));
     }
 
     public Mono<Booking> saveNew(Booking myEntry){

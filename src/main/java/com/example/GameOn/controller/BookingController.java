@@ -104,10 +104,7 @@ public class BookingController {
 
     }
 
-    @Operation(
-            summary = "Fetch Booking By Id",
-            description = "Fetch Booking By Id"
-    )
+    @Operation(summary = "Fetch Booking By Id", description = "Fetch Booking By Id")
     @GetMapping("/{id}")
     public Mono<ResponseEntity<Booking>> getById(@PathVariable String id) {
         log.info("Received request to delete Booking: {}", id);
@@ -116,10 +113,7 @@ public class BookingController {
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @Operation(
-            summary = "Delete Booking",
-            description = "To Delete Booking"
-    )
+    @Operation(summary = "Delete Booking", description = "To Delete Booking")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
         service.delete(id);

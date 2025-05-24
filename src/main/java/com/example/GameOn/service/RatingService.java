@@ -2,7 +2,9 @@ package com.example.GameOn.service;
 
 import com.example.GameOn.entity.PlansAndOffers;
 import com.example.GameOn.entity.Ratings;
+import com.example.GameOn.entity.UserDetails.UserProfile;
 import com.example.GameOn.entity.Venue;
+import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.repository.RatingRepository;
 import com.example.GameOn.repository.UserRepository;
 import com.example.GameOn.utils.Utility;
@@ -28,7 +30,6 @@ public class RatingService {
     @Autowired
     private ReactiveRedisTemplate<String, String> redisTemplate;
 
-    private final ReactiveValueOperations<String, String> valueOps;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final String KEY_PREFIX = "rating::";
     private static final String ALL_KEY_PREFIX = "all_ratings";
@@ -42,9 +43,8 @@ public class RatingService {
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public RatingService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, String> valueOps) {
+    public RatingService(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.valueOps = valueOps;
     }
 
     public Mono<Ratings> addRatingAndUpdateAverage(Ratings rating) {
@@ -80,7 +80,6 @@ public class RatingService {
     }
 
     public Mono<Ratings> save(Ratings entry){
-
         return repository.save(entry).flatMap(savedEntity -> {
             String key = KEY_PREFIX + savedEntity.getId();
             return redisTemplate.opsForValue().delete(key)       // Invalidate cache
@@ -91,23 +90,12 @@ public class RatingService {
     }
 
     public Flux<Ratings> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-        Query query = new Query();
+        String key = Utility.generateCacheKey(ALL_KEY_PREFIX,filters,page,size,sortBy,sortOrder);
+        Query query = QueryBuilder.buildQuery(filters, page, size, sortBy, sortOrder);
 
-        // ✅ Apply dynamic filters
-        if (filters != null && !filters.isEmpty()) {
-            filters.forEach((key, value) -> query.addCriteria(Criteria.where(key).is(value)));
-        }
-
-        // ✅ Sorting
-        if (sortBy != null && !sortBy.isEmpty()) {
-            Sort.Direction direction = sortOrder.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-            query.with(Sort.by(direction, sortBy));
-        }
-
-        // ✅ Pagination
-        query.skip((long) page * size).limit(size);
-
-        return mongoTemplate.find(query, Ratings.class);
+        return redisTemplate.opsForValue().get(key)
+                .flatMapMany(cachedData -> Utility.deserializeCache(cachedData, Ratings[].class))
+                .switchIfEmpty(Utility.fetchAndCacheFromDB(query, key, Ratings.class, mongoTemplate,redisTemplate));
     }
 
     public Mono<Ratings> saveNew(Ratings myEntry){

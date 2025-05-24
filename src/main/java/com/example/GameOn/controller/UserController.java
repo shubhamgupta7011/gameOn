@@ -20,9 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 
 @RestController
@@ -80,7 +77,7 @@ public class UserController {
             filterMap.put("maxAge", maxAge);
         }
         if (Objects.nonNull(skills)) {
-            filterMap.put("skills", skills);
+            filterMap.put("userDetails.skills", skills);
         }
         if (Objects.nonNull(isDeleted)) {
             filterMap.put("isDeleted", isDeleted);
@@ -134,9 +131,8 @@ public class UserController {
                     if (users.isEmpty()) {
                         log.info("No User found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-                    } else {
-                        return Mono.just(ResponseEntity.ok(users));
-                    }
+                    } else return Mono.just(ResponseEntity.ok(users));
+
                 })
                 .onErrorResume(e -> {
                     log.error("Error fetching User: " + e.getMessage());
@@ -195,7 +191,7 @@ public class UserController {
             summary = "Fetch user by id",
             description = "To Fetch user details in checking User Profile journey"
     )
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<UserProfile>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))

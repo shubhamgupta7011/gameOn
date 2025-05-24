@@ -2,12 +2,9 @@ package com.example.GameOn.controller;
 
 import com.example.GameOn.client.NominatimApiClient;
 import com.example.GameOn.enums.*;
-import com.example.GameOn.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,12 +22,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/utils")
 @Tag(name = "util Controller", description = "Manage app controller")
 public class UtilsController {
-
-    @Autowired
-    UserService service;
-
-//    @Autowired
-//    ReactiveRedisTemplate<String,String> redisTemplate;
 
     private final NominatimApiClient nominatimApiClient;
 

@@ -44,44 +44,13 @@ public class AmenityService {
         this.valueOps = valueOps;
     }
 
-//    private static final PasswordEncoder passwordEn = new BCryptPasswordEncoder();
-
-
     public Flux<Amenity> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-        String key = Utility.generateCacheKey(KEY_PREFIX,filters, page, size, sortBy, sortOrder);
+        String key = Utility.generateCacheKey(ALL_KEY_PREFIX,filters, page, size, sortBy, sortOrder);
         Query query = QueryBuilder.buildQuery(filters, page, size, sortBy, sortOrder);
-//        return mongoTemplate.find(query, Amenity.class);
-        return redisTemplate.opsForValue()
-                .get(key)
-                .flatMapMany(cachedData -> {
-                    try {
-                        Amenity[] amenities = objectMapper.readValue(cachedData, Amenity[].class);
-                        return Flux.fromArray(amenities);
-                    } catch (Exception e) {
-                        log.error("Failed to deserialize cache data: " + e.getMessage());
-                        return Flux.empty();
-                    }
-                })
-                .switchIfEmpty(
-                        mongoTemplate.find(query, Amenity.class)
-                                .collectList()
-                                .flatMapMany(amenities -> {
-                                    if (!amenities.isEmpty()) {
-                                        try {
-                                            String json = objectMapper.writeValueAsString(amenities);
-                                            redisTemplate.opsForValue()
-                                                    .set(key, json)
-                                                    .subscribe(success -> {
-                                                        if (success) {
-                                                            log.info("Data cached successfully with key: " + key);
-                                                        }
-                                                    }, error -> log.error("Failed to cache data: " + error.getMessage()));
-                                        } catch (Exception e) {
-                                            log.error("Failed to serialize data for caching: " + e.getMessage());
-                                        }
-                                    }
-                                    return Flux.fromIterable(amenities);
-                                }));
+
+        return redisTemplate.opsForValue().get(key)
+                .flatMapMany(cachedData -> Utility.deserializeCache(cachedData,Amenity[].class))
+                .switchIfEmpty(Utility.fetchAndCacheFromDB(query, key, Amenity.class, mongoTemplate,redisTemplate));
     }
 
     public Mono<Amenity> save(Amenity myEntry) {
@@ -123,8 +92,7 @@ public class AmenityService {
     public Flux<Amenity> getByVenueId(String id) {
         String key = KEY_PREFIX + id;
 
-        return redisTemplate.opsForValue()
-                .get(key)
+        return redisTemplate.opsForValue().get(key)
                 .flatMapMany(a -> Utility.deserializeList(a, Amenity.class))
                 .switchIfEmpty(repository.findByVenueId(id)
                         .collectList()

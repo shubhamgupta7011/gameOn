@@ -2,6 +2,7 @@ package com.example.GameOn.service;
 
 import com.example.GameOn.entity.UserDetails.UserProfile;
 import com.example.GameOn.entity.Venue;
+import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.repository.VenueRepository;
 import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +35,6 @@ public class VenueService {
     @Autowired
     private ReactiveRedisTemplate<String, String> redisTemplate;
 
-    private final ReactiveValueOperations<String, String> valueOps;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final String KEY_PREFIX = "venue::";
     private static final String ALL_KEY_PREFIX = "all_venue";
@@ -45,9 +45,8 @@ public class VenueService {
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public VenueService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, String> valueOps) {
+    public VenueService(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.valueOps = valueOps;
     }
 
     public Mono<Venue> save(Venue myEntry){
@@ -72,23 +71,12 @@ public class VenueService {
     }
 
     public Flux<Venue> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-        Query query = new Query();
+        String key = Utility.generateCacheKey(ALL_KEY_PREFIX,filters,page,size,sortBy,sortOrder);
+        Query query = QueryBuilder.buildQuery(filters, page, size, sortBy, sortOrder);
 
-        // ✅ Apply dynamic filters
-        if (filters != null && !filters.isEmpty()) {
-            filters.forEach((key, value) -> query.addCriteria(Criteria.where(key).is(value)));
-        }
-
-        // ✅ Sorting
-        if (sortBy != null && !sortBy.isEmpty()) {
-            Sort.Direction direction = sortOrder.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-            query.with(Sort.by(direction, sortBy));
-        }
-
-        // ✅ Pagination
-        query.skip((long) page * size).limit(size);
-
-        return mongoTemplate.find(query, Venue.class);
+        return redisTemplate.opsForValue().get(key)
+                .flatMapMany(cachedData -> Utility.deserializeCache(cachedData, Venue[].class))
+                .switchIfEmpty(Utility.fetchAndCacheFromDB(query, key, Venue.class, mongoTemplate,redisTemplate));
     }
 
     public Mono<Venue> getById(ObjectId id){

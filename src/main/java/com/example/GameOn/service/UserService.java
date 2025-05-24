@@ -1,18 +1,15 @@
 package com.example.GameOn.service;
 
 import com.example.GameOn.entity.UserDetails.UserProfile;
-import com.example.GameOn.repository.UserRepository;
 import com.example.GameOn.filters.QueryBuilder;
+import com.example.GameOn.repository.UserRepository;
 import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-//import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -20,7 +17,7 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.*;
+import java.time.Duration;
 import java.util.Map;
 
 @Component
@@ -29,44 +26,53 @@ public class UserService {
     @Autowired
     private ReactiveRedisTemplate<String, String> redisTemplate;
 
-    private final ReactiveValueOperations<String, String> valueOps;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final String KEY_PREFIX = "user::";
-    private static final String ALL_KEY = "all_users";
+    private static final String ALL_KEY_PREFIX = "all_users";
 
     @Autowired
     UserRepository userRepository;
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public UserService(ReactiveMongoTemplate mongoTemplate, ReactiveValueOperations<String, String> valueOps) {
+    public UserService(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.valueOps = valueOps;
     }
 
     public Flux<UserProfile> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-        String key = Utility.generateCacheKey(KEY_PREFIX,filters,page,size,sortBy,sortOrder);
-        Query query = QueryBuilder.buildQuery(filters,page,size,sortBy,sortOrder);
-        return mongoTemplate.find(query, UserProfile.class);
+        String key = Utility.generateCacheKey(ALL_KEY_PREFIX, filters, page, size, sortBy, sortOrder);
+        Query query = QueryBuilder.buildQuery(filters, page, size, sortBy, sortOrder);
+
+        return redisTemplate.opsForValue().get(key)
+                .flatMapMany(cachedData -> Utility.deserializeCache(cachedData, UserProfile[].class))
+                .switchIfEmpty(Utility.fetchAndCacheFromDB(query, key, UserProfile.class, mongoTemplate, redisTemplate));
     }
 
-    public Mono<UserProfile> saveUser(UserProfile user){
+    public Mono<UserProfile> saveUser(UserProfile user) {
         user.setLastUpdatedOn(Utility.getCurrentTime());
         return userRepository.save(user)
                 .flatMap(savedEntity -> {
-            String key = KEY_PREFIX + savedEntity.getId();
-            return redisTemplate.opsForValue().delete(key)       // Invalidate cache
-                    .then(Mono.fromCallable(() -> objectMapper.writeValueAsString(savedEntity))) // Serialize new data
-                    .flatMap(json -> redisTemplate.opsForValue().set(key, json))  // Update cache
-                    .thenReturn(savedEntity);
-        });
+                    String key = KEY_PREFIX + savedEntity.getId();
+                    return redisTemplate.opsForValue().delete(key)       // Invalidate cache
+                            .then(Mono.fromCallable(() -> objectMapper.writeValueAsString(savedEntity))) // Serialize new data
+                            .flatMap(json -> redisTemplate.opsForValue().set(key, json))  // Update cache
+                            .thenReturn(savedEntity);
+                });
     }
 
-    public Mono<UserProfile> findByUserId(String userId){
-        return userRepository.findByUid(userId);
+    public Mono<UserProfile> findByUserId(String userId) {
+        String key = "user-profile:" + userId;
+
+        return redisTemplate.opsForValue().get(key)
+                .flatMap(json -> Mono.fromCallable(() -> objectMapper.readValue(json, UserProfile.class)))
+                .onErrorResume(e -> Mono.empty()) // if deserialization fails, ignore cache and load from DB
+                .switchIfEmpty(
+                        userRepository.findByUid(userId).flatMap(entry -> Mono.fromCallable(() -> objectMapper.writeValueAsString(entry))
+                                .flatMap(json -> redisTemplate.opsForValue().set(key, json, Duration.ofMinutes(5)).thenReturn(entry)))
+                );
     }
 
-    public Mono<UserProfile> saveNewUser(UserProfile myEntry){
+    public Mono<UserProfile> saveNewUser(UserProfile myEntry) {
         myEntry.setCreatedOn(Utility.getCurrentTime());
         myEntry.setLastUpdatedOn(Utility.getCurrentTime());
 
@@ -76,7 +82,7 @@ public class UserService {
                         .subscribe());
     }
 
-    public Mono<UserProfile> getById(ObjectId id){
+    public Mono<UserProfile> getById(ObjectId id) {
         String key = KEY_PREFIX + id.toHexString();
 
         return redisTemplate.opsForValue().get(key)
@@ -89,7 +95,7 @@ public class UserService {
 //        return userRepository.findById(id);
     }
 
-    public void delete(ObjectId id){
+    public void delete(ObjectId id) {
         String key = KEY_PREFIX + id.toHexString();
 
         userRepository.deleteById(id)
