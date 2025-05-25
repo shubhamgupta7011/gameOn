@@ -34,20 +34,16 @@ public class PlansController {
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String skills,
-            @RequestParam(required = false) Boolean availability,
+            @RequestParam(required = false) Integer days,
+            @RequestParam(required = false) String facility,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortOrder
     ) {
 
         Map<String, Object> filterMap = new HashMap<>();
 
-        if (Objects.nonNull(skills)) {
-            filterMap.put("skills", skills);
-        }
-        if (Objects.nonNull(availability)) {
-            filterMap.put("availability", availability);
-        }
+        if (Objects.nonNull(days)) filterMap.put("days", days);
+        if (Objects.nonNull(facility))  filterMap.put("facility", facility);
 
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
                 .collectList() // Convert Flux to Mono<List<PlansAndOffers>>
@@ -55,9 +51,7 @@ public class PlansController {
                     if (PlansAndOffers.isEmpty()) {
                         log.info("No PlansAndOffers found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-                    } else {
-                        return Mono.just(ResponseEntity.ok(PlansAndOffers));
-                    }
+                    } else { return Mono.just(ResponseEntity.ok(PlansAndOffers)); }
                 })
                 .onErrorResume(e -> {
                     log.error("Error fetching PlansAndOffers: " + e.getMessage());

@@ -4,6 +4,7 @@ import com.example.GameOn.entity.Booking;
 
 import com.example.GameOn.enums.EventStatus;
 import com.example.GameOn.enums.EventType;
+import com.example.GameOn.enums.Skills;
 import com.example.GameOn.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +36,7 @@ public class BookingController {
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String skills,
+            @RequestParam(required = false) Skills skills,
             @RequestParam(required = false) Boolean availability,
             @RequestParam(required = false) EventStatus status,
             @RequestParam(required = false) String venueId,
@@ -49,23 +50,14 @@ public class BookingController {
         Map<String, Object> filterMap = new HashMap<>();
 
         if (Objects.nonNull(skills)) filterMap.put("skills", skills);
-
         if (Objects.nonNull(status)) filterMap.put("status", status);
-
         if (Objects.nonNull(venueId)) filterMap.put("venueId", venueId);
-
         if (Objects.nonNull(amenityId)) filterMap.put("amenityId", amenityId);
-
-        if (Objects.nonNull(amenityId)) filterMap.put("amenityId", amenityId);
-
         if (Objects.nonNull(userId)) filterMap.put("userId", userId);
-
         if (Objects.nonNull(type)) filterMap.put("type", type);
-
         if (Objects.nonNull(availability)) filterMap.put("availability", availability);
 
-        return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
-                .collectList() // Convert Flux to Mono<List<Booking>>
+        return service.getFilteredList(filterMap, page, size, sortBy, sortOrder).collectList() // Convert Flux to Mono<List<Booking>>
                 .flatMap(booking -> {
                     if (booking.isEmpty()) {
                         log.info("No booking found.");

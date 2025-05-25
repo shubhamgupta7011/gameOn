@@ -12,14 +12,15 @@ import java.util.List;
 public class Feedback {
     @Id
     private String id;
+
     private int rating;
-
     private String venueId;
-    private String userId;
-
+    private String clubId;
     private String comments;
     private List<String> image;
+
     private String UserName;
+    private String userId;
     private String userImage;
 
     @CreatedDate

@@ -2,6 +2,7 @@ package com.example.GameOn.controller;
 
 import com.example.GameOn.entity.Amenity;
 import com.example.GameOn.entity.TimeSlots;
+import com.example.GameOn.enums.Skills;
 import com.example.GameOn.service.AmenityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +36,7 @@ public class AmenityController {
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String skills,
+            @RequestParam(required = false) Skills skills,
             @RequestParam(required = false) Boolean availability,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Double minPrice,
@@ -145,7 +146,7 @@ public class AmenityController {
             description = "To Update Amenity if need to add and update new Timeslot"
     )
     @PutMapping("/add/time_slot/{id}")
-    public Mono<ResponseEntity<Amenity>> update(@PathVariable String id, @RequestBody TimeSlots myEntryMono) {
+    public Mono<ResponseEntity<Amenity>> addTimeSlot(@PathVariable String id, @RequestBody TimeSlots myEntryMono) {
         log.info("Received request to update Amenity: {}", myEntryMono);
         return service.getById(new ObjectId(id))
                 .flatMap(amenity -> {

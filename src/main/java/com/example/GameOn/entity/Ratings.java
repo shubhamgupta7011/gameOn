@@ -12,14 +12,14 @@ import java.util.List;
 public class Ratings {
     @Id
     private String id;
+    private String UserName;
+    private String userImage;
     private String fromUserId;
     private int securityRating;
     private int skillRating;
     private String comments;
     private List<String> image;
-    private String UserName;
-    private String userId;
-    private String userImage;
+    private String toUserId;
 
     @CreatedDate
     private Long createdOn;  // Automatically set when the document is created

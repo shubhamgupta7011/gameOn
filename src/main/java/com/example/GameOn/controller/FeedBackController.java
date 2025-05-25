@@ -33,27 +33,27 @@ public class FeedBackController {
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String skills,
-            @RequestParam(required = false) Boolean availability,
-            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) String venueId,
+            @RequestParam(required = false) String clubId,
+            @RequestParam(required = false) String rating,
+            @RequestParam(defaultValue = "lastUpdatedOn") String sortBy,
             @RequestParam(defaultValue = "asc") String sortOrder
     ) {
 
         Map<String, Object> filterMap = new HashMap<>();
 
-        if (Objects.nonNull(skills)) filterMap.put("skills", skills);
+        if (Objects.nonNull(userId)) filterMap.put("userId", userId);
+        if (Objects.nonNull(venueId)) filterMap.put("venueId", venueId);
+        if (Objects.nonNull(clubId)) filterMap.put("clubId", clubId);
+        if (Objects.nonNull(rating)) {filterMap.put("minRating", rating); filterMap.put("maxRating", 5);}
 
-        if (Objects.nonNull(availability)) filterMap.put("availability", availability);
-
-        return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
-                .collectList() // Convert Flux to Mono<List<Feedback>>
+        return service.getFilteredList(filterMap, page, size, sortBy, sortOrder).collectList() // Convert Flux to Mono<List<Feedback>>
                 .flatMap(feedback -> {
                     if (feedback.isEmpty()) {
                         log.info("No FeedBack found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-                    } else {
-                        return Mono.just(ResponseEntity.ok(feedback));
-                    }
+                    } else { return Mono.just(ResponseEntity.ok(feedback)); }
                 })
                 .onErrorResume(e -> {
                     log.error("Error fetching FeedBack: " + e.getMessage());
@@ -68,12 +68,11 @@ public class FeedBackController {
     @PostMapping("/add")
     public Mono<ResponseEntity<Feedback>> saveNew(@RequestBody Feedback myEntry){
 
-        return service.saveNewFeedback(myEntry)
+        return service.saveNew(myEntry)
                 .doOnNext(saved -> log.info("Feedback saved successfully: {}", saved))
                 .doOnError(error -> log.error("Error in Feedback save", error))
                 .map(x->new ResponseEntity<>(x, HttpStatus.CREATED))
                 .defaultIfEmpty(ResponseEntity.badRequest().build());
-
     }
 
     @Operation(
@@ -115,7 +114,7 @@ public class FeedBackController {
     @PutMapping("/update")
     public Mono<ResponseEntity<Feedback>> update(@RequestBody Mono<Feedback> myEntryMono) {
         return myEntryMono
-                .flatMap(service::saveFeedback) // Call the service method
+                .flatMap(service::save) // Call the service method
                 .map(ResponseEntity::ok) // Return 200 OK with saved Feedback
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no Feedback, return 404
                 .doOnNext(saved -> log.info("Feedback saved successfully: {}", saved))

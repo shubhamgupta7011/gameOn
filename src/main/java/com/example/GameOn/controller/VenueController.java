@@ -1,6 +1,7 @@
 package com.example.GameOn.controller;
 
 import com.example.GameOn.entity.Venue;
+import com.example.GameOn.enums.Skills;
 import com.example.GameOn.responses.VenueRes;
 import com.example.GameOn.service.AmenityService;
 import com.example.GameOn.service.VenueService;
@@ -37,7 +38,7 @@ public class VenueController {
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String skills,
+            @RequestParam(required = false) Skills skills,
             @RequestParam(required = false) Boolean availability,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortOrder

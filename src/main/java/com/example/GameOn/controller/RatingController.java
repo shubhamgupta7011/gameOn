@@ -34,19 +34,28 @@ public class RatingController {
     public Mono<ResponseEntity<?>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String skills,
-            @RequestParam(required = false) Boolean availability,
-            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(required = false) String fromUserId,
+            @RequestParam(required = false) String toUserId,
+            @RequestParam(required = false) Integer skillRating,
+            @RequestParam(required = false) Integer securityRating,
+            @RequestParam(defaultValue = "lastUpdatedOn") String sortBy,
             @RequestParam(defaultValue = "asc") String sortOrder
     ) {
 
         Map<String, Object> filterMap = new HashMap<>();
 
-        if (Objects.nonNull(skills)) filterMap.put("skills", skills);
-        if (Objects.nonNull(availability)) filterMap.put("availability", availability);
+        if (Objects.nonNull(fromUserId)) filterMap.put("fromUserId", fromUserId);
+        if (Objects.nonNull(toUserId)) filterMap.put("toUserId", toUserId);
+        if (Objects.nonNull(skillRating)) {
+            filterMap.put("minSkillRating", skillRating);
+            filterMap.put("maxSkillRating", 5);
+        }
+        if (Objects.nonNull(securityRating)) {
+            filterMap.put("minSecurityRating", securityRating);
+            filterMap.put("maxSecurityRating", 5);
+        }
 
-        return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
-                .collectList() // Convert Flux to Mono<List<Rating>>
+        return service.getFilteredList(filterMap, page, size, sortBy, sortOrder).collectList()
                 .flatMap(rating -> {
                     if (rating.isEmpty()) {
                         log.info("No rating found.");

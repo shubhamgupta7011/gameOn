@@ -22,6 +22,7 @@ public class Venue {
     private List<String> images;
     private List<String> feedbacks;
     private List<String> amenities;
+    private Double rating;
 
     @CreatedDate
     private Long createdOn;

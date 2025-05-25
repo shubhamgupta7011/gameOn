@@ -1,9 +1,7 @@
 package com.example.GameOn.service;
 
-import com.example.GameOn.entity.PlansAndOffers;
+import com.example.GameOn.entity.Amenity;
 import com.example.GameOn.entity.Ratings;
-import com.example.GameOn.entity.UserDetails.UserProfile;
-import com.example.GameOn.entity.Venue;
 import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.repository.RatingRepository;
 import com.example.GameOn.repository.UserRepository;
@@ -11,13 +9,9 @@ import com.example.GameOn.utils.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.ReactiveValueOperations;
-
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -40,6 +34,9 @@ public class RatingService {
     RatingRepository repository;
 
     @Autowired
+    UserService userService;
+
+    @Autowired
     UserRepository userRepository;
 
     private final ReactiveMongoTemplate mongoTemplate;
@@ -50,37 +47,28 @@ public class RatingService {
 
     public Mono<Ratings> addRatingAndUpdateAverage(Ratings rating) {
         // ✅ Save the rating
-        return repository.save(rating)
-                .flatMap(savedRating -> {
-                    // ✅ Update the average rating of the rated user
-                    return userRepository.findByUid(savedRating.getUserId())
-                            .flatMap(userProfile -> {
-                                return repository.findByUserId(savedRating.getUserId())
-                                        .collectList()
-                                        .flatMap(ratings -> {
-                                            // Calculate average ratings
-                                            double avgSecurityRating = ratings.stream()
-                                                    .mapToDouble(Ratings::getSecurityRating)
-                                                    .average()
-                                                    .orElse(0.0);
+        return saveNew(rating).flatMap(savedRating -> {
+            // ✅ Update the average rating of the rated user
+            return userService.findByUserId(savedRating.getToUserId())
+                    .flatMap(userProfile -> {
+                        return repository.findByToUserId(savedRating.getToUserId()).collectList()
+                                .flatMap(ratings -> {
+                                    // Calculate average ratings
+                                    userProfile.getUserDetails().setSecurityRating(ratings.stream()
+                                            .mapToDouble(Ratings::getSecurityRating)
+                                            .average().orElse(0.0));
 
-                                            double avgSkillRating = ratings.stream()
-                                                    .mapToDouble(Ratings::getSkillRating)
-                                                    .average()
-                                                    .orElse(0.0);
+                                    userProfile.getUserDetails().setSkillRating(ratings.stream()
+                                            .mapToDouble(Ratings::getSkillRating)
+                                            .average().orElse(0.0));
 
-                                            // Update the user's profile
-                                            userProfile.getUserDetails().setSecurityRating(avgSecurityRating);
-                                            userProfile.getUserDetails().setSkillRating(avgSkillRating);
-
-                                            return userRepository.save(userProfile)
-                                                    .thenReturn(savedRating);
-                                        });
-                            });
-                });
+                                    return userService.saveUser(userProfile).thenReturn(savedRating);
+                                });
+                    });
+        });
     }
 
-    public Mono<Ratings> save(Ratings entry){
+    public Mono<Ratings> save(Ratings entry) {
         return repository.save(entry).flatMap(savedEntity -> {
             String key = KEY_PREFIX + savedEntity.getId();
             return redisTemplate.opsForValue().delete(key)       // Invalidate cache
@@ -91,29 +79,24 @@ public class RatingService {
     }
 
     public Flux<Ratings> getFilteredList(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
-        String key = Utility.generateCacheKey(ALL_KEY_PREFIX,filters,page,size,sortBy,sortOrder);
+        String key = Utility.generateCacheKey(ALL_KEY_PREFIX, filters, page, size, sortBy, sortOrder);
         Query query = QueryBuilder.buildQuery(filters, page, size, sortBy, sortOrder);
 
         return redisTemplate.opsForValue().get(key)
                 .flatMapMany(cachedData -> Utility.deserializeCache(cachedData, Ratings[].class))
-                .switchIfEmpty(Utility.fetchAndCacheFromDB(query, key, Ratings.class, mongoTemplate,redisTemplate));
+                .switchIfEmpty(Utility.fetchAndCacheFromDB(query, key, Ratings.class, mongoTemplate, redisTemplate));
     }
 
-    public Mono<Ratings> saveNew(Ratings myEntry){
+    public Mono<Ratings> saveNew(Ratings myEntry) {
         myEntry.setCreatedOn(Utility.getCurrentTime());
         myEntry.setLastUpdatedOn(Utility.getCurrentTime());
         return repository.save(myEntry)
                 .doOnNext(savedEntry -> redisTemplate.opsForValue()
                         .set(KEY_PREFIX + savedEntry.getId(), Utility.serialize(savedEntry))
                         .subscribe());
-//        return repository.save(entry);
     }
 
-    public Flux<Ratings> getAll(){
-        return repository.findAll();
-    }
-
-    public Mono<Ratings> getById(ObjectId id){
+    public Mono<Ratings> getById(ObjectId id) {
         String key = KEY_PREFIX + id.toHexString();
 
         return redisTemplate.opsForValue().get(key)
@@ -125,21 +108,37 @@ public class RatingService {
                 );
     }
 
-    public Flux<Ratings> getByUserId(String id){
-        return repository.findByUserId(id);
+    public Flux<Ratings> getByUserId(String id) {
+        String key = KEY_PREFIX + id;
+
+        return redisTemplate.opsForValue().get(key)
+                .flatMapMany(a -> Utility.deserializeList(a, Ratings.class))
+                .switchIfEmpty(repository.findByToUserId(id)
+                        .collectList()
+                        .doOnNext(amenities -> Utility.cacheItem(key,amenities,redisTemplate))
+                        .flatMapMany(Flux::fromIterable));
+
+//        return repository.findByUserId(id);
     }
 
-    public Flux<Ratings> getByFromUserId(String id){
-        return repository.findByFromUserId(id);
+    public Flux<Ratings> getByFromUserId(String id) {
+        String key = KEY_PREFIX + id;
+
+        return redisTemplate.opsForValue().get(key)
+                .flatMapMany(a -> Utility.deserializeList(a, Ratings.class))
+                .switchIfEmpty(repository.findByFromUserId(id)
+                        .collectList()
+                        .doOnNext(amenities -> Utility.cacheItem(key,amenities,redisTemplate))
+                        .flatMapMany(Flux::fromIterable));
+//        return repository.findByFromUserId(id);
+
     }
 
-    public void delete(ObjectId id){
+    public void delete(ObjectId id) {
         String key = KEY_PREFIX + id.toHexString();
 
         repository.deleteById(id)
                 .then(redisTemplate.opsForValue().delete(key))
                 .subscribe();
-
-//        repository.deleteById(id);
     }
 }

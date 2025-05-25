@@ -86,7 +86,7 @@ public class Utility {
     public static <T> void cacheItems(String key, List<T> items, ReactiveRedisTemplate<String, String> redisTemplate) {
         try {
             String json = serialize(items);
-            redisTemplate.opsForValue().set(key, json).subscribe(
+            redisTemplate.opsForValue().set(key, json,Duration.ofMinutes(15)).subscribe(
                     success -> {
                         if (success) log.info("Data cached successfully with key: {}", key);
                     },

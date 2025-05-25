@@ -21,6 +21,6 @@ public interface RatingRepository extends ReactiveMongoRepository<Ratings, Objec
 
 //    Venue findByUserName(String username);
 
-    Flux<Ratings> findByUserId(String userId);
+    Flux<Ratings> findByToUserId(String userId);
     Flux<Ratings> findByFromUserId(String fromUserId);
 }

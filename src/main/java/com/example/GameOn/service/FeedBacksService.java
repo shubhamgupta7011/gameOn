@@ -31,13 +31,16 @@ public class FeedBacksService {
     @Autowired
     FeedBacksRepository repository;
 
+    @Autowired
+    VenueService venueService;
+
     private final ReactiveMongoTemplate mongoTemplate;
 
     public FeedBacksService(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Mono<Feedback> saveFeedback(Feedback feedback){
+    public Mono<Feedback> save(Feedback feedback){
         feedback.setLastUpdatedOn(Utility.getCurrentTime());
         return repository.save(feedback)
                 .flatMap(savedEntity -> {
@@ -58,13 +61,32 @@ public class FeedBacksService {
                 .switchIfEmpty(Utility.fetchAndCacheFromDB(query, key, Feedback.class, mongoTemplate,redisTemplate));
     }
 
-    public Mono<Feedback> saveNewFeedback(Feedback myEntry){
+    public Mono<Feedback> saveNew(Feedback myEntry){
         myEntry.setCreatedOn(Utility.getCurrentTime());
         myEntry.setLastUpdatedOn(Utility.getCurrentTime());
         return repository.save(myEntry)
                 .doOnNext(savedEntry -> redisTemplate.opsForValue()
                         .set(KEY_PREFIX + savedEntry.getId(), Utility.serialize(savedEntry))
                         .subscribe());
+    }
+
+    public Mono<Feedback> addRatingAndUpdateAverage(Feedback feedback) {
+        // ✅ Save the rating
+        return saveNew(feedback)
+                .flatMap(savedRating -> {
+                    // ✅ Update the average rating of the Venue
+                    return venueService.getById(new ObjectId(savedRating.getVenueId()))
+                            .flatMap(venue -> {
+                                return repository.findByVenueId(savedRating.getVenueId()).collectList()
+                                        .flatMap(ratings -> {
+                                            venue.setRating(ratings.stream()
+                                                    .mapToDouble(Feedback::getRating)
+                                                    .average().orElse(0.0));
+
+                                            return venueService.save(venue).thenReturn(savedRating);
+                                        });
+                            });
+                });
     }
 
     public Flux<Feedback> getByVenueId(String id) {
