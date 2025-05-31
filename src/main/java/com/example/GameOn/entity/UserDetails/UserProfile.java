@@ -31,13 +31,12 @@ public class UserProfile {
     private Subscription subscription;
     private String uid;
     private UserDetails userDetails;
-    private MatchPreference matchPreference;
+//    private MatchPreference matchPreference;
     private Boolean isDeleted = false;
     private Long lastActive;
     private List<EmergencyContacts> emergency_contacts;
     //need to discuss
 //    private List<String> events;
-//    private List<String> rating;
 //    private List<String> connections;
     private Location location;
 

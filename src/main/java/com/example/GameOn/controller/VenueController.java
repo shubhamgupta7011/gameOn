@@ -47,11 +47,9 @@ public class VenueController {
         Map<String, Object> filterMap = new HashMap<>();
 
         if (Objects.nonNull(skills)) filterMap.put("skills", skills);
-
         if (Objects.nonNull(availability)) filterMap.put("availability", availability);
 
-        return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
-                .collectList() // Convert Flux to Mono<List<Venue>>
+        return service.getFilteredList(filterMap, page, size, sortBy, sortOrder).collectList()
                 .flatMap(venues -> {
                     if (venues.isEmpty()) {
                         log.info("No venues found.");

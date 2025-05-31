@@ -3,8 +3,8 @@ package com.example.GameOn.controller;
 import com.example.GameOn.client.NominatimApiClient;
 import com.example.GameOn.entity.UserDetails.MatchPreference;
 import com.example.GameOn.entity.UserDetails.UserProfile;
-
 import com.example.GameOn.enums.*;
+import com.example.GameOn.service.MatchPrefrenceService;
 import com.example.GameOn.service.UserService;
 import com.example.GameOn.utils.Utility;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,11 +16,12 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @Slf4j
@@ -30,6 +31,9 @@ public class UserController {
 
     @Autowired
     UserService service;
+
+    @Autowired
+    MatchPrefrenceService matchPrefrenceService;
 
     private final NominatimApiClient nominatimApiClient;
 
@@ -98,7 +102,8 @@ public class UserController {
 
         if (Objects.nonNull(diet)) filterMap.put("userDetails.personalPreference.diet", diet);
 
-        if (Objects.nonNull(sexualPreference)) filterMap.put("userDetails.personalDetails.sexualPreference", sexualPreference);
+        if (Objects.nonNull(sexualPreference))
+            filterMap.put("userDetails.personalDetails.sexualPreference", sexualPreference);
 
         if (Objects.nonNull(lookingFor)) filterMap.put("userDetails.lookingFor", lookingFor);
 
@@ -161,6 +166,15 @@ public class UserController {
         myEntry.getSubscription().setSubscriptionStartEndDate(Utility.getCurrentTime());
 
         myEntry.setUid(service.generateHashFromPhone(myEntry.getPhoneNumber()));
+        MatchPreference preference = MatchPreference
+                .builder()
+                .createdOn(Utility.getCurrentTime())
+                .lastUpdatedOn(Utility.getCurrentTime())
+                .userId(myEntry.getId())
+                .interestedIn(myEntry.getUserDetails().getGender().equals(Gender.MALE) ? InterestedIn.WOMEN : InterestedIn.MEN)
+                .maxAge(40).minAge(18).maxDistance(100).build();
+
+        matchPrefrenceService.saveNew(preference);
         return service.saveNewUser(myEntry)
                 .doOnNext(saved -> log.info("User saved successfully: {}", saved))
                 .doOnError(error -> log.error("Error saving User", error))
@@ -230,38 +244,6 @@ public class UserController {
                     log.error("Error updating User: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
-    }
-
-    @Operation(
-            summary = "update match preference",
-            description = "Update user match preference by id"
-    )
-    @PutMapping("match_preference/{uid}")
-    public Mono<ResponseEntity<UserProfile>> updateUser(
-            @RequestBody MatchPreference matchPreference,
-            @PathVariable String uid) {
-
-        return service.findByUserId(uid)
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
-                .flatMap(user -> {
-                    user.setMatchPreference(matchPreference);
-                    return service.saveUser(user);
-                })
-                .flatMap(savedUser -> service.findByUserId(uid))
-                .map(updatedUser -> new ResponseEntity<>(updatedUser, HttpStatus.OK))
-                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-
-    @Operation(
-            summary = "Get match preference",
-            description = "To get match preferences of User by uid"
-    )
-    @GetMapping("match_preference/{uid}")
-    public Mono<ResponseEntity<MatchPreference>> getMatchPreference(@PathVariable String uid) {
-        return service.findByUserId(uid)
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
-                .doOnError(error -> log.error("User not found", error))
-                .map(user -> new ResponseEntity<>(user.getMatchPreference(), HttpStatus.OK));
     }
 
     @Operation(

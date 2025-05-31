@@ -46,18 +46,11 @@ public class AmenityController {
 
         Map<String, Object> filterMap = new HashMap<>();
 
-        if (Objects.nonNull(skills)) {
-            filterMap.put("skills", skills);
-        }
-        if (Objects.nonNull(availability)) {
-            filterMap.put("availability", availability);
-        }
-        if (Objects.nonNull(maxPrice)) {
-            filterMap.put("maxPrice", maxPrice);
-        }
-        if (Objects.nonNull(minPrice)) {
-            filterMap.put("minPrice", minPrice);
-        }
+        if (Objects.nonNull(skills)) filterMap.put("skills", skills);
+        if (Objects.nonNull(availability)) filterMap.put("availability", availability);
+        if (Objects.nonNull(maxPrice)) filterMap.put("maxPrice", maxPrice);
+        if (Objects.nonNull(minPrice)) filterMap.put("minPrice", minPrice);
+
 
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder)
                 .collectList() // Convert Flux to Mono<List<Amenity>>
@@ -65,9 +58,7 @@ public class AmenityController {
                     if (amenities.isEmpty()) {
                         log.error("No Amenity found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-                    } else {
-                        return Mono.just(ResponseEntity.ok(amenities));
-                    }
+                    } else return Mono.just(ResponseEntity.ok(amenities));
                 })
                 .onErrorResume(e -> {
                     log.error("Error fetching Amenity: " + e.getMessage());
