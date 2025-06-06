@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -60,12 +61,12 @@ public class BookingController {
         return service.getFilteredList(filterMap, page, size, sortBy, sortOrder).collectList() // Convert Flux to Mono<List<Booking>>
                 .flatMap(booking -> {
                     if (booking.isEmpty()) {
-                        log.info("No booking found.");
+                        log.info("❌ No booking found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
                     } else return Mono.just(ResponseEntity.ok(booking));
                 })
                 .onErrorResume(e -> {
-                    log.error("Error fetching booking: " + e.getMessage());
+                    log.error("❌ Error fetching booking: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -79,15 +80,14 @@ public class BookingController {
 
         return service.saveNew(myEntry)
                 .map(x->new ResponseEntity<>(x, HttpStatus.CREATED))
-                .doOnNext(saved -> log.info("Booking saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error Booking booking", error))
+                .doOnNext(saved -> log.info("✅ Booking saved successfully: {}", saved))
+                .doOnError(error -> log.error("❌ Error Booking booking", error))
                 .defaultIfEmpty(ResponseEntity.badRequest().build());
 
     }
 
     @Operation(
-            summary = "Fetch Booking By Id",
-            description = "Fetch Booking By Id"
+            summary = "Fetch Booking By Id", description = "Fetch Booking By Id"
     )
     @GetMapping("/{id}")
     public Mono<ResponseEntity<Booking>> getById(@PathVariable String id) {
@@ -98,8 +98,18 @@ public class BookingController {
     }
 
     @Operation(
-            summary = "Delete Booking",
-            description = "To Delete Booking"
+            summary = "Fetch Booking By userId", description = "Fetch Booking By UserId"
+    )
+    @GetMapping("/history/{uid}")
+    public Flux<ResponseEntity<Booking>> getByUserId(@PathVariable String uid) {
+        log.info("Received request to fetch Booking: {}", uid);
+        return service.getByUserId(uid)
+                .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
+                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @Operation(
+            summary = "Delete Booking", description = "To Delete Booking"
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
@@ -117,10 +127,10 @@ public class BookingController {
                 .flatMap(service::save) // Call the service method
                 .map(ResponseEntity::ok) // Return 200 OK with saved booking
                 .doOnNext(saved -> log.info("Booking saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error Booking booking", error))
+                .doOnError(error -> log.error("❌ Error Booking booking", error))
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no booking, return 404
                 .onErrorResume(e -> {
-                    log.error("Error updating booking: " + e.getMessage());
+                    log.error("❌ Error updating booking: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

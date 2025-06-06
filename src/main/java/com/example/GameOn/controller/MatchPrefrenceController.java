@@ -56,7 +56,7 @@ public class MatchPrefrenceController {
     public Mono<ResponseEntity<MatchPreference>> getMatchPreference(@PathVariable String uid) {
         return service.getByUserId(uid)
                 .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
-                .doOnError(error -> log.error("User not found", error))
+                .doOnError(error -> log.error("❌User not found", error))
                 .map(match -> new ResponseEntity<>(match, HttpStatus.OK));
     }
 }

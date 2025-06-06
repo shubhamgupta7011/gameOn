@@ -63,7 +63,7 @@ public class RatingController {
                     } else return Mono.just(ResponseEntity.ok(rating));
                 })
                 .onErrorResume(e -> {
-                    log.error("Error fetching rating: " + e.getMessage());
+                    log.error("❌Error fetching rating: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -77,10 +77,10 @@ public class RatingController {
         return myEntryMono
                 .flatMap(service::saveNew) // Call service method reactively
                 .doOnNext(saved -> log.info("Ratings saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error Ratings rating", error))
+                .doOnError(error -> log.error("❌Error Ratings rating", error))
                 .map(savedEntry -> ResponseEntity.status(HttpStatus.CREATED).body(savedEntry)) // Return 201 CREATED
                 .onErrorResume(e -> {
-                    log.error("Error saving document: " + e.getMessage());
+                    log.error("❌Error saving document: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
                 });
     }
@@ -94,10 +94,10 @@ public class RatingController {
         return myEntryMono
                 .flatMap(service::addRatingAndUpdateAverage) // Call service method reactively
                 .doOnNext(saved -> log.info("Ratings saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error Ratings rating", error))
+                .doOnError(error -> log.error("❌Error Ratings rating", error))
                 .map(savedEntry -> ResponseEntity.status(HttpStatus.CREATED).body(savedEntry)) // Return 201 CREATED
                 .onErrorResume(e -> {
-                    log.error("Error saving document: " + e.getMessage());
+                    log.error("❌Error saving document: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
                 });
     }
@@ -155,9 +155,9 @@ public class RatingController {
                 .map(ResponseEntity::ok) // Return 200 OK with saved rating
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no rating, return 404
                 .doOnNext(saved -> log.info("Ratings saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error Ratings rating", error))
+                .doOnError(error -> log.error("❌Error Ratings rating", error))
                 .onErrorResume(e -> {
-                    log.error("Error updating rating: " + e.getMessage());
+                    log.error("❌Error updating rating: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

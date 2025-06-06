@@ -7,14 +7,12 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
 @EnableReactiveMongoRepositories
 public interface BookingRepository extends ReactiveMongoRepository<Booking, ObjectId> {
 
-//    @Query("{$and: ?#{[0]}}") // SpEL to dynamically construct query
-//    List<Booking> findByDynamicFilters(List<Object> filters, Pageable pageable);
-
-//    Venue findByUserName(String username);
+Flux<Booking> findByUserId(String id);
 }

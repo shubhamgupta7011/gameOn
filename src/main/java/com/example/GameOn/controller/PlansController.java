@@ -54,7 +54,7 @@ public class PlansController {
                     } else { return Mono.just(ResponseEntity.ok(PlansAndOffers)); }
                 })
                 .onErrorResume(e -> {
-                    log.error("Error fetching PlansAndOffers: " + e.getMessage());
+                    log.error("❌Error fetching PlansAndOffers: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -67,7 +67,7 @@ public class PlansController {
 
             return service.saveNew(myEntry)
                     .doOnNext(saved -> log.info("PlansAndOffers saved successfully: {}", saved))
-                    .doOnError(error -> log.error("Error saving PlansAndOffers", error))
+                    .doOnError(error -> log.error("❌Error saving PlansAndOffers", error))
                     .map(x->new ResponseEntity<>(x, HttpStatus.CREATED))
                     .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
 
@@ -81,7 +81,7 @@ public class PlansController {
     public Mono<ResponseEntity<PlansAndOffers>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
-                .doOnError(error -> log.error("Not getting any PlansAndOffers", error))
+                .doOnError(error -> log.error("❌Not getting any PlansAndOffers", error))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
@@ -103,10 +103,10 @@ public class PlansController {
                 .flatMap(service::save) // Call the service method
                 .map(ResponseEntity::ok) // Return 200 OK with saved PlansAndOffers
                 .doOnNext(saved -> log.info("PlansAndOffers saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error saving PlansAndOffers", error))
+                .doOnError(error -> log.error("❌Error saving PlansAndOffers", error))
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no PlansAndOffers, return 404
                 .onErrorResume(e -> {
-                    log.error("Error updating PlansAndOffers: " + e.getMessage());
+                    log.error("❌Error updating PlansAndOffers: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

@@ -16,4 +16,5 @@ public interface ConnectionRepository extends ReactiveMongoRepository<Connection
 //    List<Booking> findByDynamicFilters(List<Object> filters, Pageable pageable);
 
     Mono<Connection> findByUsersId(String venueId);
+    Mono<Connection> findByFUserId(String venueId);
 }

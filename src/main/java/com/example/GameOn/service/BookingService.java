@@ -1,5 +1,6 @@
 package com.example.GameOn.service;
 
+import com.example.GameOn.entity.Amenity;
 import com.example.GameOn.entity.Booking;
 import com.example.GameOn.filters.QueryBuilder;
 import com.example.GameOn.repository.BookingRepository;
@@ -77,18 +78,24 @@ public class BookingService {
                         repository.findById(id).flatMap(entity -> Mono.fromCallable(() -> objectMapper.writeValueAsString(entity))
                                 .flatMap(json -> redisTemplate.opsForValue().set(key, json, Duration.ofMinutes(5)).thenReturn(entity)))
                 );
+    }
 
-//        return repository.findById(id);
+    public Flux<Booking> getByUserId(String uid){
+        String key = KEY_PREFIX + uid;
+
+        return redisTemplate.opsForValue().get(key)
+                .flatMapMany(a -> Utility.deserializeList(a, Booking.class))
+                .switchIfEmpty(repository.findByUserId(uid)
+                        .collectList()
+                        .doOnNext(amenities -> Utility.cacheItem(key,amenities,redisTemplate))
+                        .flatMapMany(Flux::fromIterable));
     }
 
     public void delete(String id){
         String key = KEY_PREFIX + id;
 
         repository.deleteById(new ObjectId(id))
-                .then(redisTemplate.opsForValue().delete(key))
-                .subscribe();
-
-//        repository.deleteById(new ObjectId(id));
+                .then(redisTemplate.opsForValue().delete(key)).subscribe();
     }
 
 

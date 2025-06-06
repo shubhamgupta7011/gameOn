@@ -57,7 +57,7 @@ public class VenueController {
                     } else return Mono.just(ResponseEntity.ok(venues));
                 })
                 .onErrorResume(e -> {
-                    log.error("Error fetching venues: " + e.getMessage());
+                    log.error("❌Error fetching venues: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -70,7 +70,7 @@ public class VenueController {
     public Mono<ResponseEntity<Venue>> saveNew(@RequestBody Venue myEntry){
             return service.saveNew(myEntry)
                     .doOnNext(saved -> log.info("Venue saved successfully: {}", saved))
-                    .doOnError(error -> log.error("Error saving Venue", error))
+                    .doOnError(error -> log.error("❌Error saving Venue", error))
                     .map(x->new ResponseEntity<>(x, HttpStatus.CREATED))
                     .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
 
@@ -84,7 +84,7 @@ public class VenueController {
     public Mono<ResponseEntity<Venue>> getById(@PathVariable String id) {
         return service.getById(new ObjectId(id))
                 .map(elem -> new ResponseEntity<>(elem, HttpStatus.OK))
-                .doOnError(error -> log.error("Not getting any Venue", error))
+                .doOnError(error -> log.error("❌Not getting any Venue", error))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
@@ -134,10 +134,10 @@ public class VenueController {
                 .flatMap(service::save) // Call the service method
                 .map(ResponseEntity::ok) // Return 200 OK with saved venue
                 .doOnNext(saved -> log.info("Venue saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error saving Venue", error))
+                .doOnError(error -> log.error("❌Error saving Venue", error))
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no venue, return 404
                 .onErrorResume(e -> {
-                    log.error("Error updating venue: " + e.getMessage());
+                    log.error("❌Error updating venue: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

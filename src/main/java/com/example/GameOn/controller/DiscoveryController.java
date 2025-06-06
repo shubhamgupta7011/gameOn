@@ -123,7 +123,7 @@ public class DiscoveryController {
                     if (users.isEmpty()) return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
                     else return Mono.just(ResponseEntity.ok(users));
                 }).onErrorResume(e -> {
-                    log.error("Error fetching User: " + e.getMessage());
+                    log.error("❌Error fetching User: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

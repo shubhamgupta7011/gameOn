@@ -11,9 +11,9 @@ import java.util.List;
 public class Connection {
     @Id
     private String id;
-    private String uId;
+    private String usersId;
     private String phoneNumber;
-    private List<String> usersId;
+    private List<String> fUserId;
 
 
 //    private List<Long> availableTimeSlot;

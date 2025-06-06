@@ -49,7 +49,7 @@ public class Utility {
         try {
             return Flux.fromArray(objectMapper.readValue(cachedData, type));
         } catch (Exception e) {
-            log.error("Failed to deserialize cache data: {}", e.getMessage());
+            log.error("❌Failed to deserialize cache data: {}", e.getMessage());
             return Flux.empty();
         }
     }
@@ -90,10 +90,10 @@ public class Utility {
                     success -> {
                         if (success) log.info("Data cached successfully with key: {}", key);
                     },
-                    error -> log.error("Failed to cache data: {}", error.getMessage())
+                    error -> log.error("❌Failed to cache data: {}", error.getMessage())
             );
         } catch (Exception e) {
-            log.error("Failed to serialize data for caching: {}", e.getMessage());
+            log.error("❌Failed to serialize data for caching: {}", e.getMessage());
         }
     }
 
@@ -104,10 +104,10 @@ public class Utility {
                     success -> {
                         if (success) log.info("Data cached successfully with key: {}", key);
                     },
-                    error -> log.error("Failed to cache data: {}", error.getMessage())
+                    error -> log.error("❌Failed to cache data: {}", error.getMessage())
             );
         } catch (Exception e) {
-            log.error("Failed to serialize data for caching: {}", e.getMessage());
+            log.error("❌Failed to serialize data for caching: {}", e.getMessage());
         }
     }
 

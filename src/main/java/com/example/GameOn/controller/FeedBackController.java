@@ -56,7 +56,7 @@ public class FeedBackController {
                     } else { return Mono.just(ResponseEntity.ok(feedback)); }
                 })
                 .onErrorResume(e -> {
-                    log.error("Error fetching FeedBack: " + e.getMessage());
+                    log.error("❌Error fetching FeedBack: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -70,7 +70,7 @@ public class FeedBackController {
 
         return service.saveNew(myEntry)
                 .doOnNext(saved -> log.info("Feedback saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error in Feedback save", error))
+                .doOnError(error -> log.error("❌Error in Feedback save", error))
                 .map(x->new ResponseEntity<>(x, HttpStatus.CREATED))
                 .defaultIfEmpty(ResponseEntity.badRequest().build());
     }
@@ -118,9 +118,9 @@ public class FeedBackController {
                 .map(ResponseEntity::ok) // Return 200 OK with saved Feedback
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no Feedback, return 404
                 .doOnNext(saved -> log.info("Feedback saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error Feedback update", error))
+                .doOnError(error -> log.error("❌Error Feedback update", error))
                 .onErrorResume(e -> {
-                    log.error("Error updating Feedback: " + e.getMessage());
+                    log.error("❌Error updating Feedback: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }

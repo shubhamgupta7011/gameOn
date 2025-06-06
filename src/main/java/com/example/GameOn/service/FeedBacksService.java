@@ -93,10 +93,6 @@ public class FeedBacksService {
         return repository.findByVenueId(id);
     }
 
-    public Flux<Feedback> getAll(){
-        return repository.findAll();
-    }
-
     public Mono<Feedback> getById(ObjectId id){
         String key = KEY_PREFIX + id.toHexString();
 

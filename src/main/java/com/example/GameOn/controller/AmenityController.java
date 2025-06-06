@@ -56,12 +56,12 @@ public class AmenityController {
                 .collectList() // Convert Flux to Mono<List<Amenity>>
                 .flatMap(amenities -> {
                     if (amenities.isEmpty()) {
-                        log.error("No Amenity found.");
+                        log.error("❌No Amenity found.");
                         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
                     } else return Mono.just(ResponseEntity.ok(amenities));
                 })
                 .onErrorResume(e -> {
-                    log.error("Error fetching Amenity: " + e.getMessage());
+                    log.error("❌Error fetching Amenity: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -75,7 +75,7 @@ public class AmenityController {
         log.info("Received request to save new Amenity: {}", myEntry);
         return service.saveNew(myEntry)
                 .doOnNext(saved -> log.info("Amenity saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error saving Amenity", error))
+                .doOnError(error -> log.error("❌Error saving Amenity", error))
                 .map(x -> new ResponseEntity<>(x, HttpStatus.CREATED))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
@@ -123,7 +123,7 @@ public class AmenityController {
         return myEntryMono
                 .flatMap(service::save) // Call the service method
                 .doOnNext(saved -> log.info("Amenity saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error saving Amenity", error))
+                .doOnError(error -> log.error("❌Error saving Amenity", error))
                 .map(ResponseEntity::ok) // Return 200 OK with saved Amenity
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no Amenity, return 404
                 .onErrorResume(e -> {
@@ -145,7 +145,7 @@ public class AmenityController {
                     return Mono.just(amenity);
                 })
                 .doOnNext(saved -> log.info("Amenity saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error saving Amenity", error))
+                .doOnError(error -> log.error("❌Error saving Amenity", error))
                 .map(ResponseEntity::ok) // Return 200 OK with saved Amenity
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no Amenity, return 404
                 .onErrorResume(e -> {

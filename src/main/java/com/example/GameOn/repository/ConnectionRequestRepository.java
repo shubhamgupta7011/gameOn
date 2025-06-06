@@ -5,6 +5,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @EnableReactiveMongoRepositories
 public interface ConnectionRequestRepository extends ReactiveMongoRepository<ConnectionRequest, ObjectId> {
@@ -12,5 +13,7 @@ public interface ConnectionRequestRepository extends ReactiveMongoRepository<Con
 //    @Query("{$and: ?#{[0]}}") // SpEL to dynamically construct query
 //    List<Booking> findByDynamicFilters(List<Object> filters, Pageable pageable);
 
-//    Flux<ConnectionRequest> findByUsersId(String venueId);
+    Mono<ConnectionRequest> findByToUserIdAndFromUserId(String toUserId, String fromUserId);
+    Flux<ConnectionRequest> findByToUserId(String toUserId);
+    Flux<ConnectionRequest> findByFromUserId( String fromUserId);
 }

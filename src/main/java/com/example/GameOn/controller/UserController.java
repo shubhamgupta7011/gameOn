@@ -121,7 +121,7 @@ public class UserController {
 
                 })
                 .onErrorResume(e -> {
-                    log.error("Error fetching User: " + e.getMessage());
+                    log.error("❌Error fetching User: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
@@ -177,7 +177,7 @@ public class UserController {
         matchPrefrenceService.saveNew(preference);
         return service.saveNewUser(myEntry)
                 .doOnNext(saved -> log.info("User saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error saving User", error))
+                .doOnError(error -> log.error("❌Error saving User", error))
                 .map(x -> new ResponseEntity<>(x, HttpStatus.CREATED))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
@@ -238,10 +238,10 @@ public class UserController {
                 .flatMap(service::saveUser) // Call the service method
                 .map(ResponseEntity::ok) // Return 200 OK with saved User
                 .doOnNext(saved -> log.info("User saved successfully: {}", saved))
-                .doOnError(error -> log.error("Error saving User", error))
+                .doOnError(error -> log.error("❌Error saving User", error))
                 .defaultIfEmpty(ResponseEntity.notFound().build()) // If no User, return 404
                 .onErrorResume(e -> {
-                    log.error("Error updating User: " + e.getMessage());
+                    log.error("❌Error updating User: " + e.getMessage());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
